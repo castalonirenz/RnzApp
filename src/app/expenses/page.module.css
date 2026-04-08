@@ -26,6 +26,11 @@
   gap: 0.75rem;
 }
 
+.maxHeight{
+  height: 300px !important;
+  
+}
+
 .summaryHeader {
   display: flex;
   justify-content: space-between;
