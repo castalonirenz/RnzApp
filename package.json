@@ -6,15 +6,28 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "start:backend": "node server.js",
+    "dev:backend": "nodemon server.js",
+    "dev:all": "concurrently \"npm run dev\" \"npm run start:backend\"",
     "lint": "eslint"
   },
   "dependencies": {
+    "axios": "^1.6.7",
+    "bcryptjs": "^2.4.3",
+    "concurrently": "^8.2.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.4",
+    "jsonwebtoken": "^9.1.0",
     "next": "16.2.2",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "sqlite3": "^5.1.6",
+    "zustand": "^4.4.7"
   },
   "devDependencies": {
     "eslint": "^9",
-    "eslint-config-next": "16.2.2"
+    "eslint-config-next": "16.2.2",
+    "nodemon": "^3.0.1"
   }
 }
