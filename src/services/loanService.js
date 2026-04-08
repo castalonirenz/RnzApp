@@ -178,10 +178,10 @@ const mapLoanToApiPayload = (loanData) => ({
 const mapStatusToApi = (status) => {
   if (!status || typeof status !== 'string') return status;
   const normalized = status.toLowerCase();
-  if (normalized === 'pending') return 'Pending';
-  if (normalized === 'ongoing') return 'Ongoing';
-  if (normalized === 'completed') return 'Completed';
-  return status;
+  if (normalized === 'pending') return 'pending';
+  if (normalized === 'ongoing') return 'ongoing';
+  if (normalized === 'completed') return 'completed';
+  return normalized;
 };
 
 export const loanService = {
