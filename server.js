@@ -406,6 +406,10 @@ app.delete('/api/loans/:id', authenticate, async (req, res) => {
       return res.status(404).json({ message: 'Loan not found' });
     }
 
+    if (!['pending', 'completed'].includes(loan.status)) {
+      return res.status(400).json({ message: 'Only pending or completed loans can be deleted' });
+    }
+
     await run('DELETE FROM payments WHERE loan_id = ?', [req.params.id]);
     await run('DELETE FROM history WHERE loan_id = ?', [req.params.id]);
     await run('DELETE FROM loans WHERE id = ?', [req.params.id]);

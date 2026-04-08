@@ -28,7 +28,12 @@ export default function LoansPage() {
     fetchLoans();
   }, [isAuthChecked, token, router, fetchLoans]);
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id, status) => {
+    if (status !== 'pending' && status !== 'completed') {
+      alert('Only pending or completed loans can be deleted.');
+      return;
+    }
+
     if (confirm('Are you sure you want to delete this loan? This action cannot be undone.')) {
       try {
         await deleteLoan(id);
@@ -77,7 +82,7 @@ export default function LoansPage() {
                 router.push(`/loans/${loan.id}`);
               }}
               onEdit={() => router.push(`/loans/${loan.id}/edit`)}
-              onDelete={() => handleDelete(loan.id)}
+              onDelete={() => handleDelete(loan.id, loan.status)}
             />
           ))}
         </div>

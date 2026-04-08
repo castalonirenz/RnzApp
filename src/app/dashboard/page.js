@@ -118,7 +118,9 @@ export default function DashboardPage() {
                 <div className={styles.loanRow}>
                   <div className={styles.loanInfo}>
                     <h4>{loan.borrower_name}</h4>
-                    <Badge status={loan.status}>{loan.status}</Badge>
+                    <div className='d-flex align-items-center justify-content-center w-100'>
+                         <Badge status={loan.status}>{loan.status}</Badge>
+                    </div>
                   </div>
                   <div className={styles.loanAmount}>
                     <p className={styles.label}>Total Due</p>

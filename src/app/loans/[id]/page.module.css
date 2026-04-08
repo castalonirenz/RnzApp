@@ -200,6 +200,9 @@
   margin: 0;
 }
 
+.tableHeight{
+  height: 300px !important;
+}
 @keyframes riseIn {
   from {
     opacity: 0;

@@ -275,21 +275,27 @@ export default function LoanDetailPage() {
             <h2>Monthly Payment Breakdown</h2>
             <Button variant="secondary" onClick={handleDownloadBreakdown}>Download as Image</Button>
           </div>
-          <div className={styles.breakdownTable}>
-            <div className={styles.tableRowHead}>
-              <span>#</span>
-              <span>Due Date</span>
-              <span>Amount</span>
-              <span>Remaining</span>
-            </div>
-            {schedule.map((item) => (
-              <div className={styles.tableRow} key={item.installmentNumber}>
-                <span>{item.installmentNumber}</span>
-                <span>{formatDate(item.dueDate)}</span>
-                <span>{formatCurrency(item.amount)}</span>
-                <span>{formatCurrency(item.remainingAfter)}</span>
-              </div>
-            ))}
+          <div className={`table-responsive mt-3 table-height ${styles.tableHeight}`} style={{  overflowY: "auto" }}>
+            <table className="table table-bordered table-striped mb-0">
+              <thead className="table-light sticky-top">
+                <tr>
+                  <th>#</th>
+                  <th>Due Date</th>
+                  <th>Amount</th>
+                  <th>Remaining</th>
+                </tr>
+              </thead>
+              <tbody>
+                {schedule.map((item) => (
+                  <tr key={item.installmentNumber}>
+                    <td>{item.installmentNumber}</td>
+                    <td>{formatDate(item.dueDate)}</td>
+                    <td>{formatCurrency(item.amount)}</td>
+                    <td>{formatCurrency(item.remainingAfter)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </Card>
 
@@ -337,7 +343,7 @@ export default function LoanDetailPage() {
 
         <Card>
           <h2>History / Audit Trail</h2>
-          <div className={styles.auditList}>
+          <div className={`${styles.auditList} ${styles.tableHeight} overflow-y-auto`}>
             {history.length > 0 ? history.map((entry) => (
               <div className={styles.auditRow} key={entry.id}>
                 <div>

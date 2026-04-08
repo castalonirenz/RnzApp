@@ -7,7 +7,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useLoanStore } from '@/store/loanStore';
 import { useExpenseStore } from '@/store/expenseStore';
 import './globals.css';
-
+import 'bootstrap/dist/css/bootstrap.min.css';
 export default function RootLayout({ children }) {
   const pathname = usePathname();
 
