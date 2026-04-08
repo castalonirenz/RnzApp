@@ -303,19 +303,22 @@ export default function ExpensesPage() {
 
       <Card>
         <h2>Expense History</h2>
-        <div className={styles.expenseList}>
-          {expenses.length > 0 ? expenses.map((expense) => (
-            <div className={styles.expenseRow} key={expense.id}>
-              <div>
-                <h4>{expense.title}</h4>
-                <p>{formatDateTime(expense.expense_date)} {expense.category ? `• ${expense.category}` : ''}</p>
+        <div className={`${styles.maxHeight} overflow-y-auto`}>
+          
+          <div className={styles.expenseList}>
+            {expenses.length > 0 ? expenses.map((expense) => (
+              <div className={styles.expenseRow} key={expense.id}>
+                <div>
+                  <h4>{expense.title}</h4>
+                  <p>{formatDateTime(expense.expense_date)} {expense.category ? `• ${expense.category}` : ''}</p>
+                </div>
+                <div className={styles.expenseMeta}>
+                  <strong>{formatCurrency(expense.amount)}</strong>
+                  <Button variant="danger" size="sm" onClick={() => handleDelete(expense.id)}>Delete</Button>
+                </div>
               </div>
-              <div className={styles.expenseMeta}>
-                <strong>{formatCurrency(expense.amount)}</strong>
-                <Button variant="danger" size="sm" onClick={() => handleDelete(expense.id)}>Delete</Button>
-              </div>
-            </div>
-          )) : <p>No expenses yet.</p>}
+            )) : <p>No expenses yet.</p>}
+          </div>
         </div>
       </Card>
     </div>
