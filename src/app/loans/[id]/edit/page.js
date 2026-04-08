@@ -20,6 +20,8 @@ export default function EditLoanPage() {
   const [formError, setFormError] = useState('');
   const [formData, setFormData] = useState({
     borrower_name: '',
+    borrower_contact: '',
+    borrower_address: '',
     principal: '',
     interest_rate: '',
     interest_period: 'month',
@@ -29,43 +31,40 @@ export default function EditLoanPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!isAuthChecked) {
-      return;
-    }
-
+    if (!isAuthChecked) return;
     if (!token) {
       router.push('/login');
       return;
     }
-
     if (params.id) {
       fetchLoanById(params.id);
     }
   }, [isAuthChecked, params.id, token, router, fetchLoanById]);
 
   useEffect(() => {
-    if (currentLoan) {
-      if (currentLoan.status !== 'pending') {
-        setFormError('Only pending loans can be edited');
-        return;
-      }
-
-      setFormData({
-        borrower_name: currentLoan.borrower_name,
-        principal: currentLoan.principal.toString(),
-        interest_rate: currentLoan.interest_rate.toString(),
-        interest_period: currentLoan.interest_period || 'month',
-        duration_months: currentLoan.duration_months.toString(),
-      });
-
-      const total = calculateTotalReceivable(
-        currentLoan.principal,
-        currentLoan.interest_rate,
-        currentLoan.duration_months,
-        currentLoan.interest_period || 'month'
-      );
-      setCalculated(total);
+    if (!currentLoan) return;
+    if (currentLoan.status !== 'pending') {
+      setFormError('Only pending loans can be edited');
+      return;
     }
+
+    setFormData({
+      borrower_name: currentLoan.borrower_name,
+      borrower_contact: currentLoan.borrower_contact || '',
+      borrower_address: currentLoan.borrower_address || '',
+      principal: currentLoan.principal.toString(),
+      interest_rate: currentLoan.interest_rate.toString(),
+      interest_period: currentLoan.interest_period || 'month',
+      duration_months: currentLoan.duration_months.toString(),
+    });
+
+    const total = calculateTotalReceivable(
+      currentLoan.principal,
+      currentLoan.interest_rate,
+      currentLoan.duration_months,
+      currentLoan.interest_period || 'month'
+    );
+    setCalculated(total);
   }, [currentLoan]);
 
   const handleChange = (e) => {
@@ -77,7 +76,7 @@ export default function EditLoanPage() {
       const total = calculateTotalReceivable(
         parseFloat(updated.principal),
         parseFloat(updated.interest_rate),
-        parseInt(updated.duration_months),
+        parseInt(updated.duration_months, 10),
         updated.interest_period
       );
       setCalculated(total);
@@ -89,13 +88,13 @@ export default function EditLoanPage() {
     setFormError('');
 
     if (!formData.borrower_name || !formData.principal || !formData.interest_rate || !formData.duration_months) {
-      setFormError('Please fill in all fields');
+      setFormError('Please fill in all required fields');
       return;
     }
 
     const principal = parseFloat(formData.principal);
     const rate = parseFloat(formData.interest_rate);
-    const months = parseInt(formData.duration_months);
+    const months = parseInt(formData.duration_months, 10);
 
     if (principal <= 0 || rate < 0 || months <= 0) {
       setFormError('Please enter valid amounts');
@@ -107,6 +106,8 @@ export default function EditLoanPage() {
       const total = calculateTotalReceivable(principal, rate, months, formData.interest_period);
       await updateLoan(params.id, {
         borrower_name: formData.borrower_name,
+        borrower_contact: formData.borrower_contact,
+        borrower_address: formData.borrower_address,
         principal,
         interest_rate: rate,
         interest_period: formData.interest_period,
@@ -129,9 +130,7 @@ export default function EditLoanPage() {
     );
   }
 
-  if (!token) {
-    return null;
-  }
+  if (!token) return null;
 
   if (!currentLoan) {
     return (
@@ -157,7 +156,7 @@ export default function EditLoanPage() {
 
   return (
     <div className={styles.container}>
-      <Link href={`/loans/${params.id}`} className={styles.backLink}>← Back to Loan</Link>
+      <Link href={`/loans/${params.id}`} className={styles.backLink}>Back to Loan</Link>
 
       <Card className={styles.formCard}>
         <h1>Edit Loan</h1>
@@ -178,6 +177,24 @@ export default function EditLoanPage() {
             onChange={handleChange}
             placeholder="Enter borrower's name"
             required
+          />
+
+          <Input
+            label="Contact Number"
+            type="text"
+            name="borrower_contact"
+            value={formData.borrower_contact}
+            onChange={handleChange}
+            placeholder="09xxxxxxxxx"
+          />
+
+          <Input
+            label="Address"
+            type="text"
+            name="borrower_address"
+            value={formData.borrower_address}
+            onChange={handleChange}
+            placeholder="Borrower address"
           />
 
           <Input
@@ -241,12 +258,7 @@ export default function EditLoanPage() {
             </div>
           )}
 
-          <Button
-            variant="primary"
-            size="lg"
-            disabled={isSubmitting}
-            type="submit"
-          >
+          <Button variant="primary" size="lg" disabled={isSubmitting} type="submit">
             {isSubmitting ? 'Updating Loan...' : 'Update Loan'}
           </Button>
         </form>

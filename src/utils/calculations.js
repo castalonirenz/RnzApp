@@ -44,6 +44,49 @@ export const formatDate = (dateString) => {
   });
 };
 
+export const formatDateTime = (dateString) => {
+  if (!dateString) return 'N/A';
+  return new Date(dateString).toLocaleString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
+export const buildMonthlySchedule = (loan) => {
+  const duration = Number(loan?.duration_months || 0);
+  const total = Number(loan?.total_receivable || 0);
+  const startDate = new Date(loan?.created_at || Date.now());
+  if (!duration || !total) {
+    return [];
+  }
+
+  let installment = Number((total / duration).toFixed(2));
+  const schedule = [];
+  let runningTotal = 0;
+
+  for (let i = 1; i <= duration; i += 1) {
+    const dueDate = new Date(startDate);
+    dueDate.setMonth(dueDate.getMonth() + i);
+
+    if (i === duration) {
+      installment = Number((total - runningTotal).toFixed(2));
+    }
+
+    runningTotal += installment;
+    schedule.push({
+      installmentNumber: i,
+      dueDate: dueDate.toISOString(),
+      amount: installment,
+      remainingAfter: Number(Math.max(total - runningTotal, 0).toFixed(2)),
+    });
+  }
+
+  return schedule;
+};
+
 // Get loan status color for UI
 export const getStatusColor = (status) => {
   switch (status?.toLowerCase()) {

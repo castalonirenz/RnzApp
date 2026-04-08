@@ -88,7 +88,7 @@ export default function LoginPage() {
         </form>
 
         <p className={styles.footer}>
-          Don't have an account?{' '}
+          Don&apos;t have an account?{' '}
           <Link href="/register">Create one now</Link>
         </p>
       </Card>

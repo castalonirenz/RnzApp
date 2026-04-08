@@ -1,5 +1,5 @@
 .container {
-  max-width: 900px;
+  max-width: 980px;
   margin: 0 auto;
 }
 
@@ -10,12 +10,13 @@
   margin-bottom: 2rem;
   gap: 2rem;
   flex-wrap: wrap;
+  animation: riseIn 0.35s ease;
 }
 
 .backLink {
   display: inline-block;
   margin-bottom: 0.5rem;
-  color: #3b82f6;
+  color: #2563eb;
   font-size: 0.875rem;
 }
 
@@ -23,21 +24,30 @@
   margin: 0.5rem 0;
 }
 
+.headerMeta {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  align-items: center;
+  color: #475569;
+  font-size: 0.85rem;
+}
+
 .grid {
   display: grid;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 .details {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.8rem;
 }
 
 .detailRow {
   display: flex;
   justify-content: space-between;
-  padding: 0.75rem;
+  padding: 0.6rem;
   border-bottom: 1px solid #e2e8f0;
 }
 
@@ -59,11 +69,11 @@
 .progressSection {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 .progressBar {
-  height: 1rem;
+  height: 0.8rem;
   background-color: #e2e8f0;
   border-radius: 9999px;
   overflow: hidden;
@@ -71,8 +81,8 @@
 
 .progressFill {
   height: 100%;
-  background: linear-gradient(90deg, #3b82f6, #10b981);
-  transition: width 0.3s ease;
+  background: linear-gradient(90deg, #2563eb, #14b8a6);
+  transition: width 0.35s ease;
 }
 
 .progressText {
@@ -85,8 +95,8 @@
 .balanceInfo {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
-  padding: 1rem;
+  gap: 0.8rem;
+  padding: 0.8rem;
   background-color: #f0f9ff;
   border-radius: 0.375rem;
 }
@@ -94,7 +104,7 @@
 .balanceItem {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.2rem;
 }
 
 .balanceLabel {
@@ -103,7 +113,7 @@
 }
 
 .balanceValue {
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   font-weight: 700;
   color: #1e293b;
 }
@@ -111,25 +121,94 @@
 .paymentForm {
   display: flex;
   flex-direction: column;
+  gap: 0.8rem;
+}
+
+.breakdownHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+
+.breakdownTable {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.tableRowHead,
+.tableRow {
+  display: grid;
+  grid-template-columns: 60px 1.3fr 1fr 1fr;
+  gap: 0.8rem;
+  padding: 0.5rem 0.7rem;
+  align-items: center;
+}
+
+.tableRowHead {
+  font-weight: 700;
+  color: #0f172a;
+  border-bottom: 1px solid #cbd5e1;
+}
+
+.tableRow {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.4rem;
+}
+
+.auditList {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.auditRow {
+  display: flex;
+  justify-content: space-between;
   gap: 1rem;
+  padding: 0.7rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+}
+
+.auditRow p {
+  margin: 0.25rem 0 0;
+  color: #64748b;
+  font-size: 0.86rem;
+}
+
+.auditMeta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.3rem;
+  font-size: 0.82rem;
 }
 
 .completedMessage {
   text-align: center;
-  padding: 2rem;
+  padding: 1.5rem;
   background-color: #dcfce7;
   border-radius: 0.5rem;
   border: 1px solid #86efac;
 }
 
-.completedMessage h3 {
-  color: #166534;
-  margin-bottom: 0.5rem;
-}
-
+.completedMessage h3,
 .completedMessage p {
   color: #166534;
   margin: 0;
+}
+
+@keyframes riseIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @media (max-width: 768px) {
@@ -138,16 +217,21 @@
     gap: 1rem;
   }
 
-  .balanceInfo {
+  .balanceInfo,
+  .tableRowHead,
+  .tableRow {
     grid-template-columns: 1fr;
   }
 
-  .detailRow {
+  .detailRow,
+  .auditRow {
     flex-direction: column;
     gap: 0.5rem;
   }
 
-  .value {
+  .value,
+  .auditMeta {
     text-align: left;
+    align-items: flex-start;
   }
 }

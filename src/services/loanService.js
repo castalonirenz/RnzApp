@@ -32,7 +32,7 @@ const toUiInterestPeriod = (interestType) => {
 };
 
 const toApiInterestType = (interestPeriod) => {
-  return interestPeriod === 'month' ? 'monthly' : (interestPeriod || 'monthly');
+  return interestPeriod === 'monthly' ? 'month' : (interestPeriod || 'annum');
 };
 
 const extractLoanList = (payload) => {
@@ -68,6 +68,8 @@ const normalizeLoanFromApi = (loan) => {
     id: loan.id ?? loan._id,
     userId: loan.userId ?? loan.user_id,
     borrower_name: loan.borrower_name ?? loan.borrowerName,
+    borrower_contact: loan.borrower_contact ?? loan.borrowerContact ?? '',
+    borrower_address: loan.borrower_address ?? loan.borrowerAddress ?? '',
     principal,
     interest_rate: interestRate,
     interest_period: interestPeriod,
@@ -81,21 +83,23 @@ const normalizeLoanFromApi = (loan) => {
 };
 
 const mapLoanToApiPayload = (loanData) => ({
-  // API_README.md contract
-  borrowerName: loanData.borrower_name,
+  borrower_name: loanData.borrower_name,
+  borrower_contact: loanData.borrower_contact || null,
+  borrower_address: loanData.borrower_address || null,
   principal: toNumber(loanData.principal, 0),
-  interestRate: toApiDecimalRate(loanData.interest_rate),
-  interestType: toApiInterestType(loanData.interest_period),
-  durationMonths: loanData.duration_months,
+  interest_rate: toApiDecimalRate(loanData.interest_rate),
+  interest_period: toApiInterestType(loanData.interest_period),
+  duration_months: loanData.duration_months,
+  total_receivable: toNumber(loanData.total_receivable, 0),
 });
 
 const mapStatusToApi = (status) => {
   if (!status || typeof status !== 'string') return status;
   const normalized = status.toLowerCase();
-  if (normalized === 'pending') return 'Pending';
-  if (normalized === 'ongoing') return 'Ongoing';
-  if (normalized === 'completed') return 'Completed';
-  return status;
+  if (normalized === 'pending') return 'pending';
+  if (normalized === 'ongoing') return 'ongoing';
+  if (normalized === 'completed') return 'completed';
+  return normalized;
 };
 
 export const loanService = {
@@ -142,8 +146,11 @@ export const loanService = {
     return response.data;
   },
 
-  addPayment: async (loanId, amount) => {
-    const response = await apiClient.post(`/loans/${loanId}/payments`, { amount });
+  addPayment: async (loanId, amount, paidAt) => {
+    const response = await apiClient.post(`/loans/${loanId}/payments`, {
+      amount,
+      paid_at: paidAt || undefined,
+    });
     const data = unwrapApiData(response.data);
     const loan = data?.loan ?? data;
     return normalizeLoanFromApi(loan);
@@ -151,6 +158,6 @@ export const loanService = {
 
   getLoanHistory: async (loanId) => {
     const response = await apiClient.get(`/loans/${loanId}/history`);
-    return response.data;
+    return unwrapApiData(response.data) || [];
   },
 };
