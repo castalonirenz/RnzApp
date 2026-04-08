@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { useAuth } from '@/hooks/useAuth';
 import { useExpenses } from '@/hooks/useExpenses';
 import Card from '@/components/Card';
@@ -10,6 +12,32 @@ import Input from '@/components/Input';
 import Alert from '@/components/Alert';
 import { formatCurrency, formatDateTime } from '@/utils/calculations';
 import styles from './page.module.css';
+
+const PERIOD_LABEL = {
+  daily: 'Daily',
+  monthly: 'Monthly',
+  yearly: 'Yearly',
+};
+
+const getPeriodKey = (dateValue, period) => {
+  const date = new Date(dateValue);
+  if (Number.isNaN(date.getTime())) return '';
+
+  if (period === 'yearly') return String(date.getFullYear());
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  if (period === 'monthly') return `${date.getFullYear()}-${month}`;
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${date.getFullYear()}-${month}-${day}`;
+};
+
+const escapeCsv = (value) => {
+  if (value == null) return '';
+  const text = String(value);
+  if (text.includes(',') || text.includes('"') || text.includes('\n')) {
+    return `"${text.replace(/"/g, '""')}"`;
+  }
+  return text;
+};
 
 export default function ExpensesPage() {
   const router = useRouter();
@@ -51,6 +79,17 @@ export default function ExpensesPage() {
     [expenses]
   );
 
+  const detailedRows = useMemo(
+    () =>
+      [...expenses]
+        .sort((a, b) => new Date(b.expense_date).getTime() - new Date(a.expense_date).getTime())
+        .map((expense) => ({
+          ...expense,
+          periodKey: getPeriodKey(expense.expense_date, period),
+        })),
+    [expenses, period]
+  );
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFormError('');
@@ -90,6 +129,85 @@ export default function ExpensesPage() {
   const handlePeriodChange = async (nextPeriod) => {
     setPeriod(nextPeriod);
     await fetchSummary(nextPeriod);
+  };
+
+  const handleDownloadExcel = () => {
+    const lines = [];
+    lines.push(escapeCsv(`Expense Report (${PERIOD_LABEL[period] || 'Daily'})`));
+    lines.push(`${escapeCsv('Generated At')},${escapeCsv(new Date().toISOString())}`);
+    lines.push('');
+    lines.push(`${escapeCsv('Summary Period')},${escapeCsv('Total (PHP)')}`);
+    summary.forEach((item) => {
+      lines.push(`${escapeCsv(item.period)},${escapeCsv(Number(item.total || 0).toFixed(2))}`);
+    });
+    lines.push('');
+    lines.push(
+      [
+        'Date & Time',
+        'Title',
+        'Category',
+        'Amount (PHP)',
+        `${PERIOD_LABEL[period] || 'Daily'} Bucket`,
+        'Notes',
+      ].map(escapeCsv).join(',')
+    );
+    detailedRows.forEach((row) => {
+      lines.push(
+        [
+          row.expense_date,
+          row.title,
+          row.category || '',
+          Number(row.amount || 0).toFixed(2),
+          row.periodKey,
+          row.notes || '',
+        ].map(escapeCsv).join(',')
+      );
+    });
+
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `expenses-${period}-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadPdf = () => {
+    const doc = new jsPDF();
+    const reportTitle = `Expense Report - ${PERIOD_LABEL[period] || 'Daily'} View`;
+    const generatedAt = new Date().toLocaleString();
+
+    doc.setFontSize(16);
+    doc.text(reportTitle, 14, 16);
+    doc.setFontSize(10);
+    doc.text(`Generated at: ${generatedAt}`, 14, 22);
+    doc.text(`Total Expense: ${Number(totalExpense || 0).toFixed(2)} PHP`, 14, 27);
+
+    autoTable(doc, {
+      startY: 33,
+      head: [['Summary Period', 'Total (PHP)']],
+      body: summary.map((item) => [item.period, Number(item.total || 0).toFixed(2)]),
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [37, 99, 235] },
+    });
+
+    const detailStartY = (doc.lastAutoTable?.finalY || 33) + 8;
+    autoTable(doc, {
+      startY: detailStartY,
+      head: [['Date & Time', 'Title', 'Category', 'Amount', 'Bucket']],
+      body: detailedRows.map((row) => [
+        new Date(row.expense_date).toLocaleString(),
+        row.title,
+        row.category || '-',
+        Number(row.amount || 0).toFixed(2),
+        row.periodKey || '-',
+      ]),
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [15, 118, 110] },
+    });
+
+    doc.save(`expenses-${period}-${new Date().toISOString().slice(0, 10)}.pdf`);
   };
 
   if (!isAuthChecked || isLoading) {
@@ -161,10 +279,16 @@ export default function ExpensesPage() {
       <Card>
         <div className={styles.summaryHeader}>
           <h2>Dynamic Summary</h2>
-          <div className={styles.filters}>
-            <Button variant={period === 'daily' ? 'primary' : 'secondary'} onClick={() => handlePeriodChange('daily')}>Daily</Button>
-            <Button variant={period === 'monthly' ? 'primary' : 'secondary'} onClick={() => handlePeriodChange('monthly')}>Monthly</Button>
-            <Button variant={period === 'yearly' ? 'primary' : 'secondary'} onClick={() => handlePeriodChange('yearly')}>Yearly</Button>
+          <div className={styles.summaryActions}>
+            <div className={styles.filters}>
+              <Button variant={period === 'daily' ? 'primary' : 'secondary'} onClick={() => handlePeriodChange('daily')}>Daily</Button>
+              <Button variant={period === 'monthly' ? 'primary' : 'secondary'} onClick={() => handlePeriodChange('monthly')}>Monthly</Button>
+              <Button variant={period === 'yearly' ? 'primary' : 'secondary'} onClick={() => handlePeriodChange('yearly')}>Yearly</Button>
+            </div>
+            <div className={styles.exportButtons}>
+              <Button variant="secondary" onClick={handleDownloadExcel}>Download Excel</Button>
+              <Button variant="primary" onClick={handleDownloadPdf}>Download PDF</Button>
+            </div>
           </div>
         </div>
         <div className={styles.summaryList}>

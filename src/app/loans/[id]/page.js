@@ -217,6 +217,14 @@ export default function LoanDetailPage() {
           <h2>Loan Details</h2>
           <div className={styles.details}>
             <div className={styles.detailRow}>
+              <span className={styles.label}>Contact Number:</span>
+              <span className={styles.value}>{currentLoan.borrower_contact || 'N/A'}</span>
+            </div>
+            <div className={styles.detailRow}>
+              <span className={styles.label}>Address:</span>
+              <span className={styles.value}>{currentLoan.borrower_address || 'N/A'}</span>
+            </div>
+            <div className={styles.detailRow}>
               <span className={styles.label}>Principal Amount:</span>
               <span className={styles.value}>{formatCurrency(currentLoan.principal)}</span>
             </div>

@@ -50,8 +50,19 @@ export default function EditLoanPage() {
 
     setFormData({
       borrower_name: currentLoan.borrower_name,
-      borrower_contact: currentLoan.borrower_contact || '',
-      borrower_address: currentLoan.borrower_address || '',
+      borrower_contact:
+        currentLoan.borrower_contact ??
+        currentLoan.borrowerContact ??
+        currentLoan.contact_number ??
+        currentLoan.contactNumber ??
+        currentLoan.phone ??
+        '',
+      borrower_address:
+        currentLoan.borrower_address ??
+        currentLoan.borrowerAddress ??
+        currentLoan.address ??
+        currentLoan.location ??
+        '',
       principal: currentLoan.principal.toString(),
       interest_rate: currentLoan.interest_rate.toString(),
       interest_period: currentLoan.interest_period || 'month',
