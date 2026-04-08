@@ -9,6 +9,7 @@ export const useExpenseStore = create((set, get) => ({
   error: null,
 
   setPeriod: (period) => set({ period }),
+  setError: (error) => set({ error }),
 
   fetchExpenses: async () => {
     set({ isLoading: true, error: null });
