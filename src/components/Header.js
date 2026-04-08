@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import styles from './Header.module.css';
 
 export default function Header() {
-  const { user, logout } = useAuth();
+  const { user, token, logout } = useAuth();
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -23,16 +23,16 @@ export default function Header() {
       <div className={styles.container}>
         <Link href="/" className={styles.logo}>
           <span className={styles.logoIcon}>💰</span>
-          <span className={styles.logoText}>My Borrower</span>
+          <span className={styles.logoText}>My Lending Tracker</span>
         </Link>
 
-        {user ? (
+        {token ? (
           <nav className={styles.nav}>
             <ul className={styles.navList}>
               <li><Link href="/dashboard" className={styles.navLink}>Dashboard</Link></li>
-              <li><Link href="/loans" className={styles.navLink}>My Loans</Link></li>
+              <li><Link href="/loans" className={styles.navLink}>My Lending</Link></li>
               <li className={styles.userMenu}>
-                <span className={styles.userName}>{user.name || user.email}</span>
+                <span className={styles.userName}>{user?.name || user?.email || 'My Account'}</span>
                 <button onClick={handleLogout} className={styles.logoutBtn}>
                   Logout
                 </button>

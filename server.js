@@ -61,6 +61,7 @@ const initializeDatabase = async () => {
     borrower_name TEXT NOT NULL,
     principal REAL NOT NULL,
     interest_rate REAL NOT NULL,
+    interest_period TEXT NOT NULL DEFAULT 'annum',
     duration_months INTEGER NOT NULL,
     total_receivable REAL NOT NULL,
     status TEXT NOT NULL DEFAULT 'pending',
@@ -86,6 +87,12 @@ const initializeDatabase = async () => {
     created_at TEXT NOT NULL,
     FOREIGN KEY (loan_id) REFERENCES loans(id)
   );`);
+
+  const loanColumns = await all('PRAGMA table_info(loans)');
+  const hasInterestPeriod = loanColumns.some((column) => column.name === 'interest_period');
+  if (!hasInterestPeriod) {
+    await run("ALTER TABLE loans ADD COLUMN interest_period TEXT NOT NULL DEFAULT 'annum'");
+  }
 };
 
 const createToken = (user) => {
@@ -189,16 +196,32 @@ app.get('/api/loans', authenticate, async (req, res) => {
 });
 
 app.post('/api/loans', authenticate, async (req, res) => {
-  const { borrower_name, principal, interest_rate, duration_months, total_receivable } = req.body;
+  const {
+    borrower_name,
+    principal,
+    interest_rate,
+    interest_period = 'annum',
+    duration_months,
+    total_receivable,
+  } = req.body;
 
-  if (!borrower_name || principal == null || interest_rate == null || duration_months == null || total_receivable == null) {
+  if (
+    !borrower_name ||
+    principal == null ||
+    interest_rate == null ||
+    duration_months == null ||
+    total_receivable == null
+  ) {
     return res.status(400).json({ message: 'All loan fields are required' });
+  }
+  if (!['annum', 'month'].includes(interest_period)) {
+    return res.status(400).json({ message: 'Invalid interest period' });
   }
 
   try {
     const result = await run(
-      'INSERT INTO loans (user_id, borrower_name, principal, interest_rate, duration_months, total_receivable, status, total_payments, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [req.user.id, borrower_name, principal, interest_rate, duration_months, total_receivable, 'pending', 0, now()]
+      'INSERT INTO loans (user_id, borrower_name, principal, interest_rate, interest_period, duration_months, total_receivable, status, total_payments, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [req.user.id, borrower_name, principal, interest_rate, interest_period, duration_months, total_receivable, 'pending', 0, now()]
     );
     const loan = await get('SELECT * FROM loans WHERE id = ?', [result.id]);
     res.json(loan);
@@ -226,10 +249,26 @@ app.get('/api/loans/:id', authenticate, async (req, res) => {
 });
 
 app.put('/api/loans/:id', authenticate, async (req, res) => {
-  const { borrower_name, principal, interest_rate, duration_months, total_receivable } = req.body;
+  const {
+    borrower_name,
+    principal,
+    interest_rate,
+    interest_period = 'annum',
+    duration_months,
+    total_receivable,
+  } = req.body;
 
-  if (!borrower_name || principal == null || interest_rate == null || duration_months == null || total_receivable == null) {
+  if (
+    !borrower_name ||
+    principal == null ||
+    interest_rate == null ||
+    duration_months == null ||
+    total_receivable == null
+  ) {
     return res.status(400).json({ message: 'All loan fields are required' });
+  }
+  if (!['annum', 'month'].includes(interest_period)) {
+    return res.status(400).json({ message: 'Invalid interest period' });
   }
 
   try {
@@ -242,8 +281,8 @@ app.put('/api/loans/:id', authenticate, async (req, res) => {
     }
 
     await run(
-      'UPDATE loans SET borrower_name = ?, principal = ?, interest_rate = ?, duration_months = ?, total_receivable = ? WHERE id = ?',
-      [borrower_name, principal, interest_rate, duration_months, total_receivable, req.params.id]
+      'UPDATE loans SET borrower_name = ?, principal = ?, interest_rate = ?, interest_period = ?, duration_months = ?, total_receivable = ? WHERE id = ?',
+      [borrower_name, principal, interest_rate, interest_period, duration_months, total_receivable, req.params.id]
     );
 
     const updated = await getLoanById(req.params.id, req.user.id);

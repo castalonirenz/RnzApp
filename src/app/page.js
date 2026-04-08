@@ -12,9 +12,9 @@ export default function Home() {
   return (
     <div className={styles.hero}>
       <div className={styles.heroContent}>
-        <h1 className={styles.title}>Welcome to My Borrower</h1>
+        <h1 className={styles.title}>Welcome to My Lending Tracker</h1>
         <p className={styles.subtitle}>
-          Manage your loans and track payments with ease
+          Manage the money you lend and track borrower payments with ease
         </p>
 
         {user ? (
@@ -26,7 +26,7 @@ export default function Home() {
             </Link>
             <Link href="/loans">
               <Button variant="secondary" size="lg">
-                View My Loans
+                View My Lending
               </Button>
             </Link>
           </div>

@@ -13,7 +13,7 @@ import styles from './page.module.css';
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { user, isAuthChecked } = useAuth();
+  const { user, token, isAuthChecked } = useAuth();
   const { loans, isLoading, fetchLoans } = useLoans();
   const [stats, setStats] = useState({
     totalLoans: 0,
@@ -27,13 +27,13 @@ export default function DashboardPage() {
       return;
     }
 
-    if (!user) {
+    if (!token) {
       router.push('/login');
       return;
     }
 
     fetchLoans();
-  }, [isAuthChecked, user, router, fetchLoans]);
+  }, [isAuthChecked, token, router, fetchLoans]);
 
   useEffect(() => {
     if (loans && loans.length > 0) {
@@ -61,7 +61,7 @@ export default function DashboardPage() {
     );
   }
 
-  if (!user) {
+  if (!token) {
     return null;
   }
 
@@ -82,7 +82,7 @@ export default function DashboardPage() {
 
         <Card className={styles.statCard}>
           <div className={styles.stat}>
-            <h4>💰 Total Borrowed</h4>
+            <h4>💰 Total Lent</h4>
             <p className={styles.statValue}>{formatCurrency(stats.totalOriginally)}</p>
           </div>
         </Card>
@@ -104,9 +104,9 @@ export default function DashboardPage() {
 
       <div className={styles.section}>
         <div className={styles.sectionHeader}>
-          <h2>Your Loans</h2>
+          <h2>Loans You Lent</h2>
           <Link href="/loans/new">
-            <Button variant="primary">Add New Loan</Button>
+            <Button variant="primary">Record New Loan</Button>
           </Link>
         </div>
 
@@ -138,9 +138,9 @@ export default function DashboardPage() {
           <Card>
             <div className={styles.emptyState}>
               <h3>No loans yet</h3>
-              <p>Create your first loan entry to get started.</p>
+              <p>Record your first lending entry to get started.</p>
               <Link href="/loans/new">
-                <Button variant="primary">Create Loan</Button>
+                <Button variant="primary">Record Loan</Button>
               </Link>
             </div>
           </Card>

@@ -1,22 +1,54 @@
 import apiClient from '@/utils/api';
 
+const extractAuthData = (payload) => {
+  const token =
+    payload?.token ||
+    payload?.access_token ||
+    payload?.data?.token ||
+    payload?.data?.access_token ||
+    null;
+
+  const user =
+    payload?.user ||
+    payload?.data?.user ||
+    null;
+
+  return { token, user };
+};
+
 export const authService = {
   register: async (data) => {
     const response = await apiClient.post('/register', data);
-    if (response.data.token) {
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
+    const { token, user } = extractAuthData(response.data);
+
+    if (token) {
+      localStorage.setItem('token', token);
     }
-    return response.data;
+
+    if (user) {
+      localStorage.setItem('user', JSON.stringify(user));
+    } else {
+      localStorage.removeItem('user');
+    }
+
+    return { ...response.data, token, user };
   },
 
   login: async (email, password) => {
     const response = await apiClient.post('/login', { email, password });
-    if (response.data.token) {
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
+    const { token, user } = extractAuthData(response.data);
+
+    if (token) {
+      localStorage.setItem('token', token);
     }
-    return response.data;
+
+    if (user) {
+      localStorage.setItem('user', JSON.stringify(user));
+    } else {
+      localStorage.removeItem('user');
+    }
+
+    return { ...response.data, token, user };
   },
 
   logout: async () => {
@@ -27,13 +59,28 @@ export const authService = {
 
   getCurrentUser: async () => {
     const response = await apiClient.get('/user');
-    return response.data;
+    const user = response.data?.user || response.data?.data?.user || response.data?.data || response.data;
+
+    if (user) {
+      localStorage.setItem('user', JSON.stringify(user));
+    }
+
+    return user;
   },
 
   getUser: () => {
     if (typeof window !== 'undefined') {
       const user = localStorage.getItem('user');
-      return user ? JSON.parse(user) : null;
+      if (!user) {
+        return null;
+      }
+
+      try {
+        return JSON.parse(user);
+      } catch {
+        localStorage.removeItem('user');
+        return null;
+      }
     }
     return null;
   },

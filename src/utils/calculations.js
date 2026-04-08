@@ -1,8 +1,20 @@
 // Calculate total receivable based on principal, interest rate, and duration
-export const calculateTotalReceivable = (principal, interestRate, durationMonths) => {
+export const calculateTotalReceivable = (
+  principal,
+  interestRate,
+  durationMonths,
+  interestPeriod = 'month'
+) => {
   const rate = interestRate / 100;
-  const time = durationMonths / 12;
-  const total = principal + (principal * rate * time);
+
+  // Per-annum: simple interest prorated by months.
+  // Per-month: simple interest multiplied by number of months.
+  const interest =
+    interestPeriod === 'month' || interestPeriod === 'monthly'
+      ? principal * rate * durationMonths
+      : principal * rate * (durationMonths / 12);
+
+  const total = principal + interest;
   return parseFloat(total.toFixed(2));
 };
 
@@ -13,10 +25,14 @@ export const calculateRemainingBalance = (totalReceivable, totalPayments) => {
 
 // Format currency
 export const formatCurrency = (amount) => {
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat('en-PH', {
     style: 'currency',
-    currency: 'USD',
+    currency: 'PHP',
   }).format(amount);
+};
+
+export const getInterestPeriodLabel = (interestPeriod) => {
+  return interestPeriod === 'month' || interestPeriod === 'monthly' ? 'per month' : 'per annum';
 };
 
 // Format date

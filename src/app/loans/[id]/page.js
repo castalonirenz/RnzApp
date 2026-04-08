@@ -10,14 +10,14 @@ import Card from '@/components/Card';
 import Input from '@/components/Input';
 import Alert from '@/components/Alert';
 import Badge from '@/components/Badge';
-import { formatCurrency, formatDate, calculateRemainingBalance } from '@/utils/calculations';
+import { formatCurrency, formatDate, calculateRemainingBalance, getInterestPeriodLabel } from '@/utils/calculations';
 import styles from './page.module.css';
 
 export default function LoanDetailPage() {
   const router = useRouter();
   const params = useParams();
-  const { user, isAuthChecked } = useAuth();
-  const { currentLoan, isLoading, fetchLoanById, addPayment } = useLoans();
+  const { token, isAuthChecked } = useAuth();
+  const { currentLoan, isLoading, fetchLoanById, addPayment, updateLoanStatus } = useLoans();
   const [paymentAmount, setPaymentAmount] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -28,7 +28,7 @@ export default function LoanDetailPage() {
       return;
     }
 
-    if (!user) {
+    if (!token) {
       router.push('/login');
       return;
     }
@@ -36,7 +36,7 @@ export default function LoanDetailPage() {
     if (params.id) {
       fetchLoanById(params.id);
     }
-  }, [isAuthChecked, params.id, user, router, fetchLoanById]);
+  }, [isAuthChecked, params.id, token, router, fetchLoanById]);
 
   const handleAddPayment = async (e) => {
     e.preventDefault();
@@ -72,6 +72,21 @@ export default function LoanDetailPage() {
     }
   };
 
+  const handleMarkOngoing = async () => {
+    setError('');
+    setSuccess('');
+    setIsSubmitting(true);
+    try {
+      await updateLoanStatus(currentLoan.id, 'ongoing');
+      setSuccess('Loan status updated to Ongoing.');
+      await fetchLoanById(params.id);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to update loan status');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   if (!isAuthChecked || isLoading) {
     return (
       <div className={styles.container}>
@@ -80,7 +95,7 @@ export default function LoanDetailPage() {
     );
   }
 
-  if (!user) {
+  if (!token) {
     return null;
   }
 
@@ -125,7 +140,9 @@ export default function LoanDetailPage() {
             </div>
             <div className={styles.detailRow}>
               <span className={styles.label}>Interest Rate:</span>
-              <span className={styles.value}>{currentLoan.interest_rate}% per annum</span>
+              <span className={styles.value}>
+                {currentLoan.interest_rate}% {getInterestPeriodLabel(currentLoan.interest_period)}
+              </span>
             </div>
             <div className={styles.detailRow}>
               <span className={styles.label}>Duration:</span>
@@ -168,7 +185,22 @@ export default function LoanDetailPage() {
         </Card>
 
         {/* Add Payment */}
-        {remaining > 0 && (
+        {currentLoan.status === 'pending' && remaining > 0 && (
+          <Card>
+            <h2>Loan Not Started</h2>
+            <p>Set this loan to Ongoing before recording repayments.</p>
+            <Button
+              variant="primary"
+              size="lg"
+              onClick={handleMarkOngoing}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Updating Status...' : 'Mark as Ongoing'}
+            </Button>
+          </Card>
+        )}
+
+        {currentLoan.status === 'ongoing' && remaining > 0 && (
           <Card>
             <h2>Record Payment</h2>
             {error && <Alert type="error" onClose={() => setError('')}>{error}</Alert>}
@@ -195,6 +227,12 @@ export default function LoanDetailPage() {
                 {isSubmitting ? 'Processing...' : 'Record Payment'}
               </Button>
             </form>
+          </Card>
+        )}
+
+        {currentLoan.status !== 'ongoing' && currentLoan.status !== 'pending' && remaining > 0 && (
+          <Card>
+            <Alert type="error">Payments can only be recorded for ongoing loans.</Alert>
           </Card>
         )}
 

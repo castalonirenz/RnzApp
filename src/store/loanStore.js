@@ -71,6 +71,22 @@ export const useLoanStore = create((set, get) => ({
     }
   },
 
+  updateLoanStatus: async (id, status) => {
+    set({ isLoading: true, error: null });
+    try {
+      const updatedLoan = await loanService.updateLoanStatus(id, status);
+      const loans = get().loans.map((l) => (l.id === id ? updatedLoan : l));
+      set({ loans, currentLoan: updatedLoan, isLoading: false });
+      return updatedLoan;
+    } catch (error) {
+      set({
+        error: error.response?.data?.message || 'Failed to update loan status',
+        isLoading: false,
+      });
+      throw error;
+    }
+  },
+
   deleteLoan: async (id) => {
     set({ isLoading: true, error: null });
     try {

@@ -12,29 +12,29 @@ import styles from './page.module.css';
 
 export default function LoansPage() {
   const router = useRouter();
-  const { user, isAuthChecked } = useAuth();
-  const { loans, isLoading, error, fetchLoans, setCurrentLoan } = useLoans();
+  const { token, isAuthChecked } = useAuth();
+  const { loans, isLoading, error, fetchLoans, setCurrentLoan, deleteLoan } = useLoans();
 
   useEffect(() => {
     if (!isAuthChecked) {
       return;
     }
 
-    if (!user) {
+    if (!token) {
       router.push('/login');
       return;
     }
 
     fetchLoans();
-  }, [isAuthChecked, user, router, fetchLoans]);
+  }, [isAuthChecked, token, router, fetchLoans]);
 
   const handleDelete = async (id) => {
     if (confirm('Are you sure you want to delete this loan? This action cannot be undone.')) {
       try {
-        await useLoans.getState().deleteLoan(id);
+        await deleteLoan(id);
         alert('Loan deleted successfully');
       } catch (err) {
-        alert('Failed to delete loan');
+        alert(err.response?.data?.message || 'Failed to delete loan');
       }
     }
   };
@@ -47,16 +47,16 @@ export default function LoansPage() {
     );
   }
 
-  if (!user) {
+  if (!token) {
     return null;
   }
 
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h1>My Loans</h1>
+        <h1>My Lending</h1>
         <Link href="/loans/new">
-          <Button variant="primary">Add New Loan</Button>
+          <Button variant="primary">Record New Loan</Button>
         </Link>
       </div>
 
@@ -84,9 +84,9 @@ export default function LoansPage() {
       ) : (
         <div className={styles.emptyState}>
           <h2>No loans yet</h2>
-          <p>Create your first loan to start tracking.</p>
+          <p>Record your first lending transaction to start tracking.</p>
           <Link href="/loans/new">
-            <Button variant="primary" size="lg">Create Your First Loan</Button>
+            <Button variant="primary" size="lg">Record Your First Loan</Button>
           </Link>
         </div>
       )}

@@ -9,19 +9,20 @@ import Button from '@/components/Button';
 import Input from '@/components/Input';
 import Card from '@/components/Card';
 import Alert from '@/components/Alert';
-import { calculateTotalReceivable, formatCurrency } from '@/utils/calculations';
+import { calculateTotalReceivable, formatCurrency, getInterestPeriodLabel } from '@/utils/calculations';
 import styles from './page.module.css';
 
 export default function EditLoanPage() {
   const router = useRouter();
   const params = useParams();
-  const { user, isAuthChecked } = useAuth();
+  const { token, isAuthChecked } = useAuth();
   const { currentLoan, isLoading, fetchLoanById, updateLoan } = useLoans();
   const [formError, setFormError] = useState('');
   const [formData, setFormData] = useState({
     borrower_name: '',
     principal: '',
     interest_rate: '',
+    interest_period: 'month',
     duration_months: '',
   });
   const [calculated, setCalculated] = useState(null);
@@ -32,7 +33,7 @@ export default function EditLoanPage() {
       return;
     }
 
-    if (!user) {
+    if (!token) {
       router.push('/login');
       return;
     }
@@ -40,7 +41,7 @@ export default function EditLoanPage() {
     if (params.id) {
       fetchLoanById(params.id);
     }
-  }, [isAuthChecked, params.id, user, router, fetchLoanById]);
+  }, [isAuthChecked, params.id, token, router, fetchLoanById]);
 
   useEffect(() => {
     if (currentLoan) {
@@ -53,13 +54,15 @@ export default function EditLoanPage() {
         borrower_name: currentLoan.borrower_name,
         principal: currentLoan.principal.toString(),
         interest_rate: currentLoan.interest_rate.toString(),
+        interest_period: currentLoan.interest_period || 'month',
         duration_months: currentLoan.duration_months.toString(),
       });
 
       const total = calculateTotalReceivable(
         currentLoan.principal,
         currentLoan.interest_rate,
-        currentLoan.duration_months
+        currentLoan.duration_months,
+        currentLoan.interest_period || 'month'
       );
       setCalculated(total);
     }
@@ -74,7 +77,8 @@ export default function EditLoanPage() {
       const total = calculateTotalReceivable(
         parseFloat(updated.principal),
         parseFloat(updated.interest_rate),
-        parseInt(updated.duration_months)
+        parseInt(updated.duration_months),
+        updated.interest_period
       );
       setCalculated(total);
     }
@@ -100,11 +104,12 @@ export default function EditLoanPage() {
 
     setIsSubmitting(true);
     try {
-      const total = calculateTotalReceivable(principal, rate, months);
+      const total = calculateTotalReceivable(principal, rate, months, formData.interest_period);
       await updateLoan(params.id, {
         borrower_name: formData.borrower_name,
         principal,
         interest_rate: rate,
+        interest_period: formData.interest_period,
         duration_months: months,
         total_receivable: total,
       });
@@ -124,7 +129,7 @@ export default function EditLoanPage() {
     );
   }
 
-  if (!user) {
+  if (!token) {
     return null;
   }
 
@@ -176,7 +181,7 @@ export default function EditLoanPage() {
           />
 
           <Input
-            label="Principal Amount ($)"
+            label="Principal Amount (PHP)"
             type="number"
             step="0.01"
             min="0"
@@ -188,7 +193,7 @@ export default function EditLoanPage() {
           />
 
           <Input
-            label="Interest Rate (% per annum)"
+            label={`Interest Rate (% ${getInterestPeriodLabel(formData.interest_period)})`}
             type="number"
             step="0.01"
             min="0"
@@ -199,6 +204,21 @@ export default function EditLoanPage() {
             placeholder="0.00"
             required
           />
+
+          <div className={styles.formGroup}>
+            <label htmlFor="interest_period" className={styles.formLabel}>Interest Type</label>
+            <select
+              id="interest_period"
+              name="interest_period"
+              value={formData.interest_period}
+              onChange={handleChange}
+              className={styles.select}
+              required
+            >
+              <option value="annum">Per annum</option>
+              <option value="month">Per month</option>
+            </select>
+          </div>
 
           <Input
             label="Duration (months)"
@@ -216,7 +236,7 @@ export default function EditLoanPage() {
               <h3>Total Amount Due</h3>
               <p className={styles.totalReceivable}>{formatCurrency(calculated)}</p>
               <p className={styles.calculationNote}>
-                Formula: Principal + (Principal × Rate × Time)
+                Interest type: {getInterestPeriodLabel(formData.interest_period)}
               </p>
             </div>
           )}

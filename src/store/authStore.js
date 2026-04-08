@@ -17,13 +17,23 @@ export const useAuthStore = create((set) => ({
     set({ isLoading: true, error: null });
     try {
       const data = await authService.login(email, password);
+      let resolvedUser = data.user || authService.getUser();
+
+      if (!resolvedUser && data.token) {
+        try {
+          resolvedUser = await authService.getCurrentUser();
+        } catch {
+          resolvedUser = null;
+        }
+      }
+
       set({ 
-        user: data.user, 
+        user: resolvedUser, 
         token: data.token, 
         isAuthChecked: true,
         isLoading: false 
       });
-      return data;
+      return { ...data, user: resolvedUser };
     } catch (error) {
       set({ 
         error: error.response?.data?.message || 'Login failed', 
@@ -37,13 +47,23 @@ export const useAuthStore = create((set) => ({
     set({ isLoading: true, error: null });
     try {
       const data = await authService.register(userData);
+      let resolvedUser = data.user || authService.getUser();
+
+      if (!resolvedUser && data.token) {
+        try {
+          resolvedUser = await authService.getCurrentUser();
+        } catch {
+          resolvedUser = null;
+        }
+      }
+
       set({ 
-        user: data.user, 
+        user: resolvedUser, 
         token: data.token, 
         isAuthChecked: true,
         isLoading: false 
       });
-      return data;
+      return { ...data, user: resolvedUser };
     } catch (error) {
       set({ 
         error: error.response?.data?.message || 'Registration failed', 
@@ -63,13 +83,27 @@ export const useAuthStore = create((set) => ({
     }
   },
 
-  checkAuth: () => {
+  checkAuth: async () => {
     const user = authService.getUser();
     const token = authService.getToken();
-    if (user && token) {
+
+    if (!token) {
+      set({ user: null, token: null, isAuthChecked: true });
+      return;
+    }
+
+    if (user) {
       set({ user, token, isAuthChecked: true });
       return;
     }
-    set({ user: null, token: null, isAuthChecked: true });
+
+    try {
+      const currentUser = await authService.getCurrentUser();
+      set({ user: currentUser, token, isAuthChecked: true });
+    } catch {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      set({ user: null, token: null, isAuthChecked: true });
+    }
   },
 }));

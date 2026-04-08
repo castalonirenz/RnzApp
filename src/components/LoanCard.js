@@ -2,7 +2,7 @@
 
 import styles from './LoanCard.module.css';
 import Badge from './Badge';
-import { formatCurrency } from '@/utils/calculations';
+import { formatCurrency, getInterestPeriodLabel } from '@/utils/calculations';
 
 export default function LoanCard({ loan, onView, onEdit, onDelete }) {
   const totalPayments = loan.total_payments || 0;
@@ -25,7 +25,9 @@ export default function LoanCard({ loan, onView, onEdit, onDelete }) {
         </div>
         <div className={styles.detailRow}>
           <span className={styles.label}>Interest Rate:</span>
-          <span className={styles.value}>{loan.interest_rate}% per annum</span>
+          <span className={styles.value}>
+            {loan.interest_rate}% {getInterestPeriodLabel(loan.interest_period)}
+          </span>
         </div>
         <div className={styles.detailRow}>
           <span className={styles.label}>Duration:</span>
