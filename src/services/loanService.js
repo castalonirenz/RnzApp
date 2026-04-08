@@ -32,7 +32,7 @@ const toUiInterestPeriod = (interestType) => {
 };
 
 const toApiInterestType = (interestPeriod) => {
-  return interestPeriod === 'month' ? 'monthly' : (interestPeriod || 'monthly');
+  return interestPeriod === 'month' ? 'month' : (interestPeriod || 'annum');
 };
 
 const extractLoanList = (payload) => {
@@ -45,6 +45,48 @@ const extractLoanList = (payload) => {
 
   return [];
 };
+
+const extractHistoryList = (payload) => {
+  const unwrapped = unwrapApiData(payload);
+
+  if (Array.isArray(unwrapped)) return unwrapped;
+  if (Array.isArray(unwrapped?.history)) return unwrapped.history;
+  if (Array.isArray(unwrapped?.items)) return unwrapped.items;
+  if (Array.isArray(unwrapped?.records)) return unwrapped.records;
+  if (Array.isArray(unwrapped?.payments)) {
+    return unwrapped.payments.map((payment) => ({
+      ...payment,
+      action: payment.action || 'payment',
+      details: payment.details || 'Payment recorded',
+      amount_paid: payment.amount_paid ?? payment.amountPaid ?? payment.amount,
+      created_at: payment.created_at ?? payment.createdAt ?? payment.paid_at ?? payment.paidAt,
+    }));
+  }
+
+  return [];
+};
+
+const normalizeHistoryEntry = (entry, index) => ({
+  ...entry,
+  id: entry.id ?? entry._id ?? `${entry.created_at ?? entry.createdAt ?? 'history'}-${index}`,
+  action: (entry.action ?? entry.type ?? 'payment').toString().toLowerCase(),
+  details: entry.details ?? entry.note ?? entry.description ?? '',
+  amount_paid:
+    entry.amount_paid ??
+    entry.amountPaid ??
+    entry.payment_amount ??
+    entry.paymentAmount ??
+    entry.amount ??
+    null,
+  balance_after: entry.balance_after ?? entry.balanceAfter ?? null,
+  created_at:
+    entry.created_at ??
+    entry.createdAt ??
+    entry.paid_at ??
+    entry.paidAt ??
+    entry.date ??
+    null,
+});
 
 const normalizeLoanFromApi = (loan) => {
   if (!loan) return loan;
@@ -68,6 +110,29 @@ const normalizeLoanFromApi = (loan) => {
     id: loan.id ?? loan._id,
     userId: loan.userId ?? loan.user_id,
     borrower_name: loan.borrower_name ?? loan.borrowerName,
+    borrower_contact:
+      loan.borrower_contact ??
+      loan.borrowerContact ??
+      loan.borrower_phone ??
+      loan.borrowerPhone ??
+      loan.contact_number ??
+      loan.contactNumber ??
+      loan.phone_number ??
+      loan.phoneNumber ??
+      loan.phone ??
+      loan.contact ??
+      loan.borrower?.contact ??
+      loan.borrower?.contact_number ??
+      loan.borrower?.contactNumber ??
+      loan.borrower?.phone ??
+      '',
+    borrower_address:
+      loan.borrower_address ??
+      loan.borrowerAddress ??
+      loan.address ??
+      loan.location ??
+      loan.borrower?.address ??
+      '',
     principal,
     interest_rate: interestRate,
     interest_period: interestPeriod,
@@ -81,12 +146,33 @@ const normalizeLoanFromApi = (loan) => {
 };
 
 const mapLoanToApiPayload = (loanData) => ({
-  // API_README.md contract
+  // Primary (camelCase) contract
   borrowerName: loanData.borrower_name,
+  borrowerContact: loanData.borrower_contact || null,
+  borrowerAddress: loanData.borrower_address || null,
+  borrowerPhone: loanData.borrower_contact || null,
+  borrower_phone: loanData.borrower_contact || null,
+  contactNumber: loanData.borrower_contact || null,
+  contact_number: loanData.borrower_contact || null,
+  phoneNumber: loanData.borrower_contact || null,
+  phone_number: loanData.borrower_contact || null,
+  phone: loanData.borrower_contact || null,
+  contact: loanData.borrower_contact || null,
+  address: loanData.borrower_address || null,
   principal: toNumber(loanData.principal, 0),
   interestRate: toApiDecimalRate(loanData.interest_rate),
-  interestType: toApiInterestType(loanData.interest_period),
-  durationMonths: loanData.duration_months,
+  interestType: loanData.interest_period === 'month' ? 'monthly' : (loanData.interest_period || 'annum'),
+  durationMonths: Math.trunc(toNumber(loanData.duration_months, 0)),
+  totalReceivable: toNumber(loanData.total_receivable, 0),
+
+  // Compatibility (snake_case) contract
+  borrower_name: loanData.borrower_name,
+  borrower_contact: loanData.borrower_contact || null,
+  borrower_address: loanData.borrower_address || null,
+  interest_rate: toApiDecimalRate(loanData.interest_rate),
+  interest_period: toApiInterestType(loanData.interest_period),
+  duration_months: Math.trunc(toNumber(loanData.duration_months, 0)),
+  total_receivable: toNumber(loanData.total_receivable, 0),
 });
 
 const mapStatusToApi = (status) => {
@@ -142,8 +228,11 @@ export const loanService = {
     return response.data;
   },
 
-  addPayment: async (loanId, amount) => {
-    const response = await apiClient.post(`/loans/${loanId}/payments`, { amount });
+  addPayment: async (loanId, amount, paidAt) => {
+    const response = await apiClient.post(`/loans/${loanId}/payments`, {
+      amount,
+      paid_at: paidAt || undefined,
+    });
     const data = unwrapApiData(response.data);
     const loan = data?.loan ?? data;
     return normalizeLoanFromApi(loan);
@@ -151,6 +240,9 @@ export const loanService = {
 
   getLoanHistory: async (loanId) => {
     const response = await apiClient.get(`/loans/${loanId}/history`);
-    return response.data;
+    const rows = extractHistoryList(response.data);
+    return rows
+      .map(normalizeHistoryEntry)
+      .sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
   },
 };

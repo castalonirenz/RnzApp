@@ -53,6 +53,7 @@ main {
   margin: 0 auto;
   padding: 2rem 1rem;
   width: 100%;
+  animation: pageFadeIn 0.25s ease;
 }
 
 footer {
@@ -230,5 +231,16 @@ p {
 
   .container {
     padding: 0 0.5rem;
+  }
+}
+
+@keyframes pageFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

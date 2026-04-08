@@ -19,6 +19,8 @@ export default function NewLoanPage() {
   const [formError, setFormError] = useState('');
   const [formData, setFormData] = useState({
     borrower_name: '',
+    borrower_contact: '',
+    borrower_address: '',
     principal: '',
     interest_rate: '',
     interest_period: 'month',
@@ -50,12 +52,11 @@ export default function NewLoanPage() {
     const updated = { ...formData, [name]: value };
     setFormData(updated);
 
-    // Auto-calculate total receivable
     if (updated.principal && updated.interest_rate && updated.duration_months) {
       const total = calculateTotalReceivable(
         parseFloat(updated.principal),
         parseFloat(updated.interest_rate),
-        parseInt(updated.duration_months),
+        parseInt(updated.duration_months, 10),
         updated.interest_period
       );
       setCalculated(total);
@@ -67,13 +68,13 @@ export default function NewLoanPage() {
     setFormError('');
 
     if (!formData.borrower_name || !formData.principal || !formData.interest_rate || !formData.duration_months) {
-      setFormError('Please fill in all fields');
+      setFormError('Please fill in all required fields');
       return;
     }
 
     const principal = parseFloat(formData.principal);
     const rate = parseFloat(formData.interest_rate);
-    const months = parseInt(formData.duration_months);
+    const months = parseInt(formData.duration_months, 10);
 
     if (principal <= 0 || rate < 0 || months <= 0) {
       setFormError('Please enter valid amounts');
@@ -84,6 +85,8 @@ export default function NewLoanPage() {
       const total = calculateTotalReceivable(principal, rate, months, formData.interest_period);
       await createLoan({
         borrower_name: formData.borrower_name,
+        borrower_contact: formData.borrower_contact,
+        borrower_address: formData.borrower_address,
         principal,
         interest_rate: rate,
         interest_period: formData.interest_period,
@@ -98,7 +101,7 @@ export default function NewLoanPage() {
 
   return (
     <div className={styles.container}>
-      <Link href="/loans" className={styles.backLink}>← Back to Loans</Link>
+      <Link href="/loans" className={styles.backLink}>Back to Loans</Link>
 
       <Card className={styles.formCard}>
         <h1>Create New Loan</h1>
@@ -119,6 +122,24 @@ export default function NewLoanPage() {
             onChange={handleChange}
             placeholder="Enter borrower's name"
             required
+          />
+
+          <Input
+            label="Contact Number"
+            type="text"
+            name="borrower_contact"
+            value={formData.borrower_contact}
+            onChange={handleChange}
+            placeholder="09xxxxxxxxx"
+          />
+
+          <Input
+            label="Address"
+            type="text"
+            name="borrower_address"
+            value={formData.borrower_address}
+            onChange={handleChange}
+            placeholder="Borrower address"
           />
 
           <Input
@@ -182,12 +203,7 @@ export default function NewLoanPage() {
             </div>
           )}
 
-          <Button
-            variant="primary"
-            size="lg"
-            disabled={isLoading}
-            type="submit"
-          >
+          <Button variant="primary" size="lg" disabled={isLoading} type="submit">
             {isLoading ? 'Creating Loan...' : 'Create Loan'}
           </Button>
         </form>

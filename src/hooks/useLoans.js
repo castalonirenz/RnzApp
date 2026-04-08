@@ -14,6 +14,8 @@ export const useLoans = () => {
     updateLoanStatus,
     deleteLoan,
     addPayment,
+    addPaymentWithDate,
+    fetchLoanHistory,
     setCurrentLoan,
   } = useLoanStore();
 
@@ -29,6 +31,8 @@ export const useLoans = () => {
     updateLoanStatus,
     deleteLoan,
     addPayment,
+    addPaymentWithDate,
+    fetchLoanHistory,
     setCurrentLoan,
   };
 };

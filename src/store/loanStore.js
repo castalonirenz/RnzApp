@@ -117,4 +117,32 @@ export const useLoanStore = create((set, get) => ({
       throw error;
     }
   },
+
+  addPaymentWithDate: async (loanId, amount, paidAt) => {
+    set({ isLoading: true, error: null });
+    try {
+      const updatedLoan = await loanService.addPayment(loanId, amount, paidAt);
+      const loans = get().loans.map((l) => (l.id === loanId ? updatedLoan : l));
+      set({ loans, currentLoan: updatedLoan, isLoading: false });
+      return updatedLoan;
+    } catch (error) {
+      set({
+        error: error.response?.data?.message || 'Failed to add payment',
+        isLoading: false,
+      });
+      throw error;
+    }
+  },
+
+  fetchLoanHistory: async (loanId) => {
+    set({ error: null });
+    try {
+      return await loanService.getLoanHistory(loanId);
+    } catch (error) {
+      set({
+        error: error.response?.data?.message || 'Failed to fetch loan history',
+      });
+      throw error;
+    }
+  },
 }));

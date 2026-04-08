@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
@@ -8,6 +8,7 @@ import { useLoans } from '@/hooks/useLoans';
 import Button from '@/components/Button';
 import Card from '@/components/Card';
 import Alert from '@/components/Alert';
+import Badge from '@/components/Badge';
 import { formatCurrency } from '@/utils/calculations';
 import styles from './page.module.css';
 
@@ -15,12 +16,6 @@ export default function DashboardPage() {
   const router = useRouter();
   const { user, token, isAuthChecked } = useAuth();
   const { loans, isLoading, fetchLoans } = useLoans();
-  const [stats, setStats] = useState({
-    totalLoans: 0,
-    totalOriginally: 0,
-    totalPaid: 0,
-    totalOutstanding: 0,
-  });
 
   useEffect(() => {
     if (!isAuthChecked) {
@@ -35,22 +30,23 @@ export default function DashboardPage() {
     fetchLoans();
   }, [isAuthChecked, token, router, fetchLoans]);
 
-  useEffect(() => {
-    if (loans && loans.length > 0) {
-      const stats = loans.reduce(
-        (acc, loan) => {
-          const totalPayments = loan.total_payments || 0;
-          return {
-            totalLoans: acc.totalLoans + 1,
-            totalOriginally: acc.totalOriginally + loan.principal,
-            totalPaid: acc.totalPaid + totalPayments,
-            totalOutstanding: acc.totalOutstanding + (loan.total_receivable - totalPayments),
-          };
-        },
-        { totalLoans: 0, totalOriginally: 0, totalPaid: 0, totalOutstanding: 0 }
-      );
-      setStats(stats);
+  const stats = useMemo(() => {
+    if (!loans || loans.length === 0) {
+      return { totalLoans: 0, totalOriginally: 0, totalPaid: 0, totalOutstanding: 0 };
     }
+
+    return loans.reduce(
+      (acc, loan) => {
+        const totalPayments = loan.total_payments || 0;
+        return {
+          totalLoans: acc.totalLoans + 1,
+          totalOriginally: acc.totalOriginally + loan.principal,
+          totalPaid: acc.totalPaid + totalPayments,
+          totalOutstanding: acc.totalOutstanding + (loan.total_receivable - totalPayments),
+        };
+      },
+      { totalLoans: 0, totalOriginally: 0, totalPaid: 0, totalOutstanding: 0 }
+    );
   }, [loans]);
 
   if (!isAuthChecked || isLoading) {
@@ -105,9 +101,14 @@ export default function DashboardPage() {
       <div className={styles.section}>
         <div className={styles.sectionHeader}>
           <h2>Loans You Lent</h2>
-          <Link href="/loans/new">
-            <Button variant="primary">Record New Loan</Button>
-          </Link>
+          <div className={styles.headerActions}>
+            <Link href="/expenses">
+              <Button variant="secondary">Expenses</Button>
+            </Link>
+            <Link href="/loans/new">
+              <Button variant="primary">Record New Loan</Button>
+            </Link>
+          </div>
         </div>
 
         {loans && loans.length > 0 ? (
@@ -117,7 +118,7 @@ export default function DashboardPage() {
                 <div className={styles.loanRow}>
                   <div className={styles.loanInfo}>
                     <h4>{loan.borrower_name}</h4>
-                    <p>{loan.status.toUpperCase()}</p>
+                    <Badge status={loan.status}>{loan.status}</Badge>
                   </div>
                   <div className={styles.loanAmount}>
                     <p className={styles.label}>Total Due</p>

@@ -1,0 +1,118 @@
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  display: grid;
+  gap: 1rem;
+}
+
+.header p {
+  color: #64748b;
+}
+
+.totalCard {
+  background: linear-gradient(135deg, #eff6ff, #f0fdfa);
+  border: 1px solid #bfdbfe;
+}
+
+.total {
+  font-size: 2rem;
+  margin: 0;
+  color: #1d4ed8;
+  font-weight: 700;
+}
+
+.form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.summaryHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.summaryActions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.filters {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.exportButtons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.summaryList {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.expenseList {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.expenseRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  align-items: center;
+}
+
+.expenseRow h4 {
+  margin: 0;
+}
+
+.expenseRow p {
+  margin: 0.25rem 0 0;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.expenseMeta {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .expenseRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .expenseMeta {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .summaryActions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .exportButtons {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+}

@@ -18,7 +18,7 @@ export default function RootLayout({ children }) {
           {children}
         </main>
         <footer className="footer">
-          <p>&copy; 2024 My Borrower. All rights reserved.</p>
+          <p>&copy; 2026 Renz Castaloni. All rights reserved.</p>
         </footer>
       </body>
     </html>
