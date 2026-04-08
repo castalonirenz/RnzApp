@@ -222,105 +222,111 @@ export default function ExpensesPage() {
         <p>Daily expense monitoring with dynamic totals</p>
       </div>
 
-      <Card className={styles.totalCard}>
-        <h3>Total Expense</h3>
-        <p className={styles.total}>{formatCurrency(totalExpense)}</p>
-      </Card>
+      <div className='d-flex flex-wrap w-100'>
+        <div className='col-12 col-lg-6'>
+          <Card className={styles.totalCard}>
+            <h3>Total Expense</h3>
+            <p className={styles.total}>{formatCurrency(totalExpense)}</p>
+          </Card>
 
-      <Card>
-        <h2>Add Expense</h2>
-        {(error || formError) && <Alert type="error">{formError || error}</Alert>}
-        <form className={styles.form} onSubmit={handleSubmit}>
-          <Input
-            label="Title"
-            name="title"
-            value={form.title}
-            onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
-            placeholder="Transportation, lunch, etc."
-            required
-          />
-          <Input
-            label="Amount (PHP)"
-            type="number"
-            step="0.01"
-            min="0.01"
-            name="amount"
-            value={form.amount}
-            onChange={(e) => setForm((prev) => ({ ...prev, amount: e.target.value }))}
-            placeholder="0.00"
-            required
-          />
-          <Input
-            label="Date & Time"
-            type="datetime-local"
-            name="expense_date"
-            value={form.expense_date}
-            onChange={(e) => setForm((prev) => ({ ...prev, expense_date: e.target.value }))}
-            required
-          />
-          <Input
-            label="Category"
-            name="category"
-            value={form.category}
-            onChange={(e) => setForm((prev) => ({ ...prev, category: e.target.value }))}
-            placeholder="Food, Bills, Travel"
-          />
-          <Input
-            label="Notes"
-            name="notes"
-            value={form.notes}
-            onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))}
-            placeholder="Optional"
-          />
-          <Button type="submit" variant="primary">Save Expense</Button>
-        </form>
-      </Card>
-
-      <Card>
-        <div className={styles.summaryHeader}>
-          <h2>Dynamic Summary</h2>
-          <div className={styles.summaryActions}>
-            <div className={styles.filters}>
-              <Button variant={period === 'daily' ? 'primary' : 'secondary'} onClick={() => handlePeriodChange('daily')}>Daily</Button>
-              <Button variant={period === 'monthly' ? 'primary' : 'secondary'} onClick={() => handlePeriodChange('monthly')}>Monthly</Button>
-              <Button variant={period === 'yearly' ? 'primary' : 'secondary'} onClick={() => handlePeriodChange('yearly')}>Yearly</Button>
-            </div>
-            <div className={styles.exportButtons}>
-              <Button variant="secondary" onClick={handleDownloadExcel}>Download Excel</Button>
-              <Button variant="primary" onClick={handleDownloadPdf}>Download PDF</Button>
-            </div>
-          </div>
+          <Card>
+            <h2>Add Expense</h2>
+            {(error || formError) && <Alert type="error">{formError || error}</Alert>}
+            <form className={styles.form} onSubmit={handleSubmit}>
+              <Input
+                label="Title"
+                name="title"
+                value={form.title}
+                onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
+                placeholder="Transportation, lunch, etc."
+                required
+              />
+              <Input
+                label="Amount (PHP)"
+                type="number"
+                step="0.01"
+                min="0.01"
+                name="amount"
+                value={form.amount}
+                onChange={(e) => setForm((prev) => ({ ...prev, amount: e.target.value }))}
+                placeholder="0.00"
+                required
+              />
+              <Input
+                label="Date & Time"
+                type="datetime-local"
+                name="expense_date"
+                value={form.expense_date}
+                onChange={(e) => setForm((prev) => ({ ...prev, expense_date: e.target.value }))}
+                required
+              />
+              <Input
+                label="Category"
+                name="category"
+                value={form.category}
+                onChange={(e) => setForm((prev) => ({ ...prev, category: e.target.value }))}
+                placeholder="Food, Bills, Travel"
+              />
+              <Input
+                label="Notes"
+                name="notes"
+                value={form.notes}
+                onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))}
+                placeholder="Optional"
+              />
+              <Button type="submit" variant="primary">Save Expense</Button>
+            </form>
+          </Card>
         </div>
-        <div className={styles.summaryList}>
-          {summary.length > 0 ? summary.map((item) => (
-            <div className={styles.summaryRow} key={item.period}>
-              <span>{item.period}</span>
-              <strong>{formatCurrency(item.total)}</strong>
-            </div>
-          )) : <p>No summary yet.</p>}
-        </div>
-      </Card>
 
-      <Card>
-        <h2>Expense History</h2>
-        <div className={`${styles.maxHeight} overflow-y-auto`}>
-          
-          <div className={styles.expenseList}>
-            {expenses.length > 0 ? expenses.map((expense) => (
-              <div className={styles.expenseRow} key={expense.id}>
-                <div>
-                  <h4>{expense.title}</h4>
-                  <p>{formatDateTime(expense.expense_date)} {expense.category ? `• ${expense.category}` : ''}</p>
+        <div className='col-12 col-lg-6'>
+          <Card>
+            <div className={styles.summaryHeader}>
+              <h2>Dynamic Summary</h2>
+              <div className={styles.summaryActions}>
+                <div className={styles.filters}>
+                  <Button variant={period === 'daily' ? 'primary' : 'secondary'} onClick={() => handlePeriodChange('daily')}>Daily</Button>
+                  <Button variant={period === 'monthly' ? 'primary' : 'secondary'} onClick={() => handlePeriodChange('monthly')}>Monthly</Button>
+                  <Button variant={period === 'yearly' ? 'primary' : 'secondary'} onClick={() => handlePeriodChange('yearly')}>Yearly</Button>
                 </div>
-                <div className={styles.expenseMeta}>
-                  <strong>{formatCurrency(expense.amount)}</strong>
-                  <Button variant="danger" size="sm" onClick={() => handleDelete(expense.id)}>Delete</Button>
+                <div className={styles.exportButtons}>
+                  <Button variant="secondary" onClick={handleDownloadExcel}>Download Excel</Button>
+                  <Button variant="primary" onClick={handleDownloadPdf}>Download PDF</Button>
                 </div>
               </div>
-            )) : <p>No expenses yet.</p>}
-          </div>
+            </div>
+            <div className={styles.summaryList}>
+              {summary.length > 0 ? summary.map((item) => (
+                <div className={styles.summaryRow} key={item.period}>
+                  <span>{item.period}</span>
+                  <strong>{formatCurrency(item.total)}</strong>
+                </div>
+              )) : <p>No summary yet.</p>}
+            </div>
+          </Card>
+
+          <Card>
+            <h2>Expense History</h2>
+            <div className={`${styles.maxHeight} overflow-y-auto`}>
+
+              <div className={styles.expenseList}>
+                {expenses.length > 0 ? expenses.map((expense) => (
+                  <div className={styles.expenseRow} key={expense.id}>
+                    <div>
+                      <h4>{expense.title}</h4>
+                      <p>{formatDateTime(expense.expense_date)} {expense.category ? `• ${expense.category}` : ''}</p>
+                    </div>
+                    <div className={styles.expenseMeta}>
+                      <strong>{formatCurrency(expense.amount)}</strong>
+                      <Button variant="danger" size="sm" onClick={() => handleDelete(expense.id)}>Delete</Button>
+                    </div>
+                  </div>
+                )) : <p>No expenses yet.</p>}
+              </div>
+            </div>
+          </Card>
         </div>
-      </Card>
+      </div>
     </div>
   );
 }
