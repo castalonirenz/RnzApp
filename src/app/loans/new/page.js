@@ -25,8 +25,10 @@ export default function NewLoanPage() {
     interest_rate: '',
     interest_period: 'month',
     duration_months: '',
+    accepted_terms: false,
   });
   const [calculated, setCalculated] = useState(null);
+  const [showTerms, setShowTerms] = useState(false);
 
   if (!isAuthChecked) {
     return (
@@ -48,8 +50,8 @@ export default function NewLoanPage() {
   }
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    const updated = { ...formData, [name]: value };
+    const { name, value, type, checked } = e.target;
+    const updated = { ...formData, [name]: type === 'checkbox' ? checked : value };
     setFormData(updated);
 
     if (updated.principal && updated.interest_rate && updated.duration_months) {
@@ -78,6 +80,11 @@ export default function NewLoanPage() {
 
     if (principal <= 0 || rate < 0 || months <= 0) {
       setFormError('Please enter valid amounts');
+      return;
+    }
+
+    if (!formData.accepted_terms) {
+      setFormError('You must accept the Terms, Conditions, and Data Privacy Notice before creating a loan.');
       return;
     }
 
@@ -113,7 +120,9 @@ export default function NewLoanPage() {
           </Alert>
         )}
 
-        <form onSubmit={handleSubmit} className={styles.form}>
+        <form 
+          onSubmit={handleSubmit}
+          className={styles.form}>
           <Input
             label="Borrower Name"
             type="text"
@@ -203,11 +212,98 @@ export default function NewLoanPage() {
             </div>
           )}
 
-          <Button variant="primary" size="lg" disabled={isLoading} type="submit">
+          <div className={styles.consentBox}>
+            <label className={styles.checkboxLabel}>
+              <input
+                type="checkbox"
+                name="accepted_terms"
+                checked={formData.accepted_terms}
+                onChange={handleChange}
+              />
+              <span>
+                I confirm I have lawful authority and consent to process borrower data and I agree to the Terms,
+                Conditions, and Data Privacy Notice (PH).
+              </span>
+            </label>
+            <button
+              type="button"
+              className={styles.termsLinkBtn}
+              onClick={() => setShowTerms(true)}
+            >
+              View Terms & Data Privacy
+            </button>
+          </div>
+
+          <Button
+            type="submit"
+            variant="primary" size="lg" disabled={isLoading} >
             {isLoading ? 'Creating Loan...' : 'Create Loan'}
           </Button>
         </form>
       </Card>
+
+      {showTerms && (
+        <div className={styles.modalBackdrop} onClick={() => setShowTerms(false)}>
+          <div
+            className={styles.modal}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="terms-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.modalHeader}>
+              <h3 id="terms-title">Terms & Conditions + Data Privacy Notice (PH)</h3>
+              <button type="button" className={styles.closeModalBtn} onClick={() => setShowTerms(false)}>
+                x
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              <p>
+                This app collects borrower name, contact number, address, and loan/payment details for loan management.
+                By proceeding, you confirm you are authorized to collect and process this data.
+              </p>
+              <p>
+                Data processing is aligned with Republic Act No. 10173 (Data Privacy Act of 2012), including
+                transparency, legitimate purpose, and proportionality principles.
+              </p>
+              <p>
+                You must inform borrowers about processing purpose and respect applicable data subject rights
+                (e.g., access, correction, and erasure requests where applicable).
+              </p>
+              <p>
+                Keep borrower data secure, limit access, and retain data only as long as necessary for lawful
+                lending and record-keeping purposes.
+              </p>
+              <p>
+                References:
+                {' '}
+                <a href="https://lawphil.net/statutes/repacts/ra2012/ra_10173_2012.html" target="_blank" rel="noreferrer">
+                  RA 10173 (LawPhil)
+                </a>
+                {' '}|{' '}
+                <a href="https://privacy.gov.ph/data-subject-rights/" target="_blank" rel="noreferrer">
+                  NPC Data Subject Rights
+                </a>
+              </p>
+            </div>
+            <div className={styles.modalFooter}>
+              <Button type="button" variant="secondary" onClick={() => setShowTerms(false)}>
+                Close
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                onClick={() => {
+                  setFormData((prev) => ({ ...prev, accepted_terms: true }));
+                  setShowTerms(false);
+                }}
+              >
+                I Understand and Agree
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
