@@ -214,9 +214,10 @@ export const loanService = {
     return normalizeLoanFromApi(loan);
   },
 
-  updateLoanStatus: async (id, status) => {
+  updateLoanStatus: async (id, status, releaseDate) => {
     const response = await apiClient.patch(`/loans/${id}/status`, {
       status: mapStatusToApi(status),
+      releaseDate: releaseDate
     });
     const data = unwrapApiData(response.data);
     const loan = data?.loan ?? data;

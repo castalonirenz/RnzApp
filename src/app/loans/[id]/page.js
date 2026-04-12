@@ -40,6 +40,8 @@ export default function LoanDetailPage() {
   const [success, setSuccess] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
+  const [releaseDate, setReleaseDate] = useState('');
+
   useEffect(() => {
     if (!isAuthChecked) return;
     if (!token) {
@@ -51,6 +53,17 @@ export default function LoanDetailPage() {
       fetchLoanById(params.id);
     }
   }, [isAuthChecked, params.id, token, router, fetchLoanById]);
+
+  useEffect(() => {
+    if (currentLoan?.release_date) {
+      // Format date to YYYY-MM-DD for date input
+      const date = new Date(currentLoan.release_date);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      setReleaseDate(`${year}-${month}-${day}`);
+    }
+  }, [currentLoan?.release_date]);
 
   useEffect(() => {
     const loadHistory = async () => {
@@ -139,9 +152,11 @@ export default function LoanDetailPage() {
     setError('');
     setSuccess('');
     setIsSubmitting(true);
+
+  
     try {
-      await updateLoanStatus(currentLoan.id, 'ongoing');
-      setSuccess('Loan status updated to Ongoing.');
+      await updateLoanStatus(currentLoan.id, 'ongoing', releaseDate);
+      setSuccess('Loan update successfully!');
       await fetchLoanById(params.id);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to update loan status');
@@ -318,7 +333,7 @@ export default function LoanDetailPage() {
           <p className={styles.resultCount}>
             Breakdown: {filteredSchedule.length}/{schedule.length} | History: {filteredHistory.length}/{history.length}
           </p>
-          <div className={`table-responsive mt-3 table-height ${styles.tableHeight}`} style={{  overflowY: "auto" }}>
+          <div className={`table-responsive mt-3 table-height ${styles.tableHeight}`} style={{ overflowY: "auto" }}>
             <table className="table table-bordered table-striped mb-0">
               <thead className="table-light sticky-top">
                 <tr>
@@ -342,12 +357,33 @@ export default function LoanDetailPage() {
           </div>
         </Card>
 
-        {currentLoan.status === 'pending' && remaining > 0 && (
+         {error && <Alert type="error" onClose={() => setError('')}>{error}</Alert>}
+            {success && <Alert type="success" onClose={() => setSuccess('')}>{success}</Alert>}
+
+        {(currentLoan.status === 'pending' || currentLoan.status == "ongoing") && remaining > 0 && (
           <Card>
-            <h2>Loan Not Started</h2>
-            <p>Set this loan to Ongoing before recording repayments.</p>
+            <h2>{currentLoan.status == "pending" ? "Loan not started" : "Ongoing loan"}</h2>
+            <p>{currentLoan.status == "pending" ? "Set this loan to Ongoing before recording repayments." : "You can update the release date below"}</p>
+
+          
+            {/* Date Picker */}
+            <div className="mb-3">
+              <label htmlFor="releaseDate" className="form-label">
+                Release Date
+              </label>
+              <input
+                type="date"
+                id="releaseDate"
+                className="form-control"
+                value={releaseDate}
+                onChange={(e) => setReleaseDate(e.target.value)}
+              />
+            </div>
+
+
+
             <Button variant="primary" size="lg" onClick={handleMarkOngoing} disabled={isSubmitting}>
-              {isSubmitting ? 'Updating Status...' : 'Mark as Ongoing'}
+              {isSubmitting ? 'Updating Status...' : currentLoan.status == "pending" ? 'Release loan' : 'Update release date'}
             </Button>
           </Card>
         )}
@@ -355,8 +391,7 @@ export default function LoanDetailPage() {
         {currentLoan.status === 'ongoing' && remaining > 0 && (
           <Card>
             <h2>Record Payment</h2>
-            {error && <Alert type="error" onClose={() => setError('')}>{error}</Alert>}
-            {success && <Alert type="success" onClose={() => setSuccess('')}>{success}</Alert>}
+           
 
             <form onSubmit={handleAddPayment} className={styles.paymentForm}>
               <Input
