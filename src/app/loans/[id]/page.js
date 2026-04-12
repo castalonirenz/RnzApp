@@ -350,6 +350,7 @@ export default function LoanDetailPage() {
             <h2>Loan Not Started</h2>
             <p>Set this loan to Ongoing before recording repayments.</p>
 
+            {error && <Alert type="error" onClose={() => setError('')}>{error}</Alert>}
             {/* Date Picker */}
             <div className="mb-3">
               <label htmlFor="releaseDate" className="form-label">
