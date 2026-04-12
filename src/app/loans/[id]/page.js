@@ -39,7 +39,8 @@ export default function LoanDetailPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [releaseDate, setReleaseDate] = useState('')
+
+  const [releaseDate, setReleaseDate] = useState('');
 
   useEffect(() => {
     if (!isAuthChecked) return;
@@ -52,6 +53,17 @@ export default function LoanDetailPage() {
       fetchLoanById(params.id);
     }
   }, [isAuthChecked, params.id, token, router, fetchLoanById]);
+
+  useEffect(() => {
+    if (currentLoan?.release_date) {
+      // Format date to YYYY-MM-DD for date input
+      const date = new Date(currentLoan.release_date);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      setReleaseDate(`${year}-${month}-${day}`);
+    }
+  }, [currentLoan?.release_date]);
 
   useEffect(() => {
     const loadHistory = async () => {
@@ -345,10 +357,10 @@ export default function LoanDetailPage() {
           </div>
         </Card>
 
-        {currentLoan.status === 'pending' && remaining > 0 && (
+        {(currentLoan.status === 'pending' || currentLoan.status == "ongoing") && remaining > 0 && (
           <Card>
-            <h2>Loan Not Started</h2>
-            <p>Set this loan to Ongoing before recording repayments.</p>
+            <h2>{currentLoan.status == "pending" ? "Loan not started" : "Ongoing loan"}</h2>
+            <p>{currentLoan.status == "pending" ? "Set this loan to Ongoing before recording repayments." : "You can update the release date below"}</p>
 
             {error && <Alert type="error" onClose={() => setError('')}>{error}</Alert>}
             {/* Date Picker */}
@@ -368,7 +380,7 @@ export default function LoanDetailPage() {
 
 
             <Button variant="primary" size="lg" onClick={handleMarkOngoing} disabled={isSubmitting}>
-              {isSubmitting ? 'Updating Status...' : 'Release loan'}
+              {isSubmitting ? 'Updating Status...' : currentLoan.status == "pending" ? 'Release loan' : 'Update release date'}
             </Button>
           </Card>
         )}
