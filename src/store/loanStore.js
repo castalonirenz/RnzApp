@@ -71,10 +71,10 @@ export const useLoanStore = create((set, get) => ({
     }
   },
 
-  updateLoanStatus: async (id, status) => {
+  updateLoanStatus: async (id, status, releaseDate) => {
     set({ isLoading: true, error: null });
     try {
-      const updatedLoan = await loanService.updateLoanStatus(id, status);
+      const updatedLoan = await loanService.updateLoanStatus(id, status, releaseDate);
       const loans = get().loans.map((l) => (l.id === id ? updatedLoan : l));
       set({ loans, currentLoan: updatedLoan, isLoading: false });
       return updatedLoan;

@@ -39,6 +39,7 @@ export default function LoanDetailPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [releaseDate, setReleaseDate] = useState('')
 
   useEffect(() => {
     if (!isAuthChecked) return;
@@ -139,8 +140,10 @@ export default function LoanDetailPage() {
     setError('');
     setSuccess('');
     setIsSubmitting(true);
+
+  
     try {
-      await updateLoanStatus(currentLoan.id, 'ongoing');
+      await updateLoanStatus(currentLoan.id, 'ongoing', releaseDate);
       setSuccess('Loan status updated to Ongoing.');
       await fetchLoanById(params.id);
     } catch (err) {
@@ -318,7 +321,7 @@ export default function LoanDetailPage() {
           <p className={styles.resultCount}>
             Breakdown: {filteredSchedule.length}/{schedule.length} | History: {filteredHistory.length}/{history.length}
           </p>
-          <div className={`table-responsive mt-3 table-height ${styles.tableHeight}`} style={{  overflowY: "auto" }}>
+          <div className={`table-responsive mt-3 table-height ${styles.tableHeight}`} style={{ overflowY: "auto" }}>
             <table className="table table-bordered table-striped mb-0">
               <thead className="table-light sticky-top">
                 <tr>
@@ -346,6 +349,23 @@ export default function LoanDetailPage() {
           <Card>
             <h2>Loan Not Started</h2>
             <p>Set this loan to Ongoing before recording repayments.</p>
+
+            {/* Date Picker */}
+            <div className="mb-3">
+              <label htmlFor="releaseDate" className="form-label">
+                Release Date
+              </label>
+              <input
+                type="date"
+                id="releaseDate"
+                className="form-control"
+                value={releaseDate}
+                onChange={(e) => setReleaseDate(e.target.value)}
+              />
+            </div>
+
+
+
             <Button variant="primary" size="lg" onClick={handleMarkOngoing} disabled={isSubmitting}>
               {isSubmitting ? 'Updating Status...' : 'Release loan'}
             </Button>
