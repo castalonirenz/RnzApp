@@ -38,6 +38,7 @@ export default function LoanDetailPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     if (!isAuthChecked) return;
@@ -66,6 +67,38 @@ export default function LoanDetailPage() {
   }, [params.id, token, fetchLoanHistory, currentLoan?.total_payments, currentLoan?.status]);
 
   const schedule = useMemo(() => (currentLoan ? buildMonthlySchedule(currentLoan) : []), [currentLoan]);
+  const filteredSchedule = useMemo(() => {
+    const keyword = searchTerm.trim().toLowerCase();
+    if (!keyword) return schedule;
+
+    return schedule.filter((item) =>
+      [
+        item.installmentNumber,
+        formatDate(item.dueDate),
+        item.amount,
+        item.remainingAfter,
+      ]
+        .map((field) => String(field).toLowerCase())
+        .some((field) => field.includes(keyword))
+    );
+  }, [schedule, searchTerm]);
+
+  const filteredHistory = useMemo(() => {
+    const keyword = searchTerm.trim().toLowerCase();
+    if (!keyword) return history;
+
+    return history.filter((entry) =>
+      [
+        entry.action,
+        entry.details,
+        entry.amount_paid,
+        formatDateTime(entry.created_at),
+      ]
+        .filter(Boolean)
+        .map((field) => String(field).toLowerCase())
+        .some((field) => field.includes(keyword))
+    );
+  }, [history, searchTerm]);
 
   const handleAddPayment = async (e) => {
     e.preventDefault();
@@ -205,7 +238,7 @@ export default function LoanDetailPage() {
             {currentLoan.borrower_address && <span>{currentLoan.borrower_address}</span>}
           </div>
         </div>
-        {currentLoan.status === 'pending' && (
+        {(currentLoan.status === 'pending' || currentLoan.status === 'ongoing') && (
           <Link href={`/loans/${currentLoan.id}/edit`}>
             <Button variant="primary">Edit Loan</Button>
           </Link>
@@ -275,6 +308,16 @@ export default function LoanDetailPage() {
             <h2>Monthly Payment Breakdown</h2>
             <Button variant="secondary" onClick={handleDownloadBreakdown}>Download as Image</Button>
           </div>
+          <input
+            type="search"
+            className={styles.searchInput}
+            placeholder="Search installment, due date, history..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <p className={styles.resultCount}>
+            Breakdown: {filteredSchedule.length}/{schedule.length} | History: {filteredHistory.length}/{history.length}
+          </p>
           <div className={`table-responsive mt-3 table-height ${styles.tableHeight}`} style={{  overflowY: "auto" }}>
             <table className="table table-bordered table-striped mb-0">
               <thead className="table-light sticky-top">
@@ -286,7 +329,7 @@ export default function LoanDetailPage() {
                 </tr>
               </thead>
               <tbody>
-                {schedule.map((item) => (
+                {filteredSchedule.map((item) => (
                   <tr key={item.installmentNumber}>
                     <td>{item.installmentNumber}</td>
                     <td>{formatDate(item.dueDate)}</td>
@@ -344,7 +387,7 @@ export default function LoanDetailPage() {
         <Card>
           <h2>History / Audit Trail</h2>
           <div className={`${styles.auditList} ${styles.tableHeight} overflow-y-auto`}>
-            {history.length > 0 ? history.map((entry) => (
+            {filteredHistory.length > 0 ? filteredHistory.map((entry) => (
               <div className={styles.auditRow} key={entry.id}>
                 <div>
                   <strong>{entry.action.replace('_', ' ')}</strong>
@@ -355,7 +398,7 @@ export default function LoanDetailPage() {
                   <span>{formatDateTime(entry.created_at)}</span>
                 </div>
               </div>
-            )) : <p>No history yet.</p>}
+            )) : <p>{history.length > 0 ? 'No matching history entries.' : 'No history yet.'}</p>}
           </div>
         </Card>
 

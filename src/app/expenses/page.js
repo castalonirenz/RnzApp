@@ -18,6 +18,7 @@ const PERIOD_LABEL = {
   monthly: 'Monthly',
   yearly: 'Yearly',
 };
+const EXPENSES_PER_PAGE = 6;
 
 const getPeriodKey = (dateValue, period) => {
   const date = new Date(dateValue);
@@ -62,6 +63,8 @@ export default function ExpensesPage() {
     expense_date: new Date().toISOString().slice(0, 16),
   });
   const [formError, setFormError] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     if (!isAuthChecked) return;
@@ -89,6 +92,38 @@ export default function ExpensesPage() {
         })),
     [expenses, period]
   );
+
+  const filteredExpenses = useMemo(() => {
+    const keyword = searchTerm.trim().toLowerCase();
+    if (!keyword) return expenses;
+
+    return expenses.filter((expense) =>
+      [
+        expense.title,
+        expense.category,
+        expense.notes,
+        expense.expense_date,
+        String(expense.amount ?? ''),
+      ]
+        .filter(Boolean)
+        .some((field) => String(field).toLowerCase().includes(keyword))
+    );
+  }, [expenses, searchTerm]);
+
+  const sortedFilteredExpenses = useMemo(
+    () =>
+      [...filteredExpenses].sort(
+        (a, b) => new Date(b.expense_date).getTime() - new Date(a.expense_date).getTime()
+      ),
+    [filteredExpenses]
+  );
+
+  const totalPages = Math.max(1, Math.ceil(sortedFilteredExpenses.length / EXPENSES_PER_PAGE));
+  const currentPageSafe = Math.min(currentPage, totalPages);
+  const paginatedExpenses = useMemo(() => {
+    const start = (currentPageSafe - 1) * EXPENSES_PER_PAGE;
+    return sortedFilteredExpenses.slice(start, start + EXPENSES_PER_PAGE);
+  }, [sortedFilteredExpenses, currentPageSafe]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -307,23 +342,57 @@ export default function ExpensesPage() {
 
           <Card>
             <h2>Expense History</h2>
+            <input
+              type="search"
+              className={styles.searchInput}
+              placeholder="Search title, category, notes..."
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
+            />
+            <p className={styles.resultCount}>
+              Showing {sortedFilteredExpenses.length} of {expenses.length} expenses
+            </p>
             <div className={`${styles.maxHeight} overflow-y-auto`}>
 
               <div className={styles.expenseList}>
-                {expenses.length > 0 ? expenses.map((expense) => (
+                {paginatedExpenses.length > 0 ? paginatedExpenses.map((expense) => (
                   <div className={styles.expenseRow} key={expense.id}>
                     <div>
                       <h4>{expense.title}</h4>
-                      <p>{formatDateTime(expense.expense_date)} {expense.category ? `• ${expense.category}` : ''}</p>
+                      <p>{formatDateTime(expense.expense_date)} {expense.category ? `- ${expense.category}` : ''}</p>
                     </div>
                     <div className={styles.expenseMeta}>
                       <strong>{formatCurrency(expense.amount)}</strong>
                       <Button variant="danger" size="sm" onClick={() => handleDelete(expense.id)}>Delete</Button>
                     </div>
                   </div>
-                )) : <p>No expenses yet.</p>}
+                )) : <p>{expenses.length > 0 ? 'No matching expenses found.' : 'No expenses yet.'}</p>}
               </div>
             </div>
+            {sortedFilteredExpenses.length > EXPENSES_PER_PAGE && (
+              <div className={styles.pagination}>
+                <Button
+                  variant="secondary"
+                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                  disabled={currentPageSafe === 1}
+                >
+                  Previous
+                </Button>
+                <span className={styles.pageLabel}>
+                  Page {currentPageSafe} of {totalPages}
+                </span>
+                <Button
+                  variant="secondary"
+                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                  disabled={currentPageSafe === totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            )}
           </Card>
         </div>
       </div>

@@ -59,7 +59,7 @@ export default function LoanCard({ loan, onView, onEdit, onDelete }) {
 
       <div className={styles.actions}>
         <button className={styles.viewBtn} onClick={onView}>View Details</button>
-        {loan.status === 'pending' && onEdit && (
+        {(loan.status === 'pending' || loan.status === 'ongoing') && onEdit && (
           <button className={styles.editBtn} onClick={onEdit}>Edit</button>
         )}
         {onDelete && (loan.status === 'pending' || loan.status === 'completed') && (

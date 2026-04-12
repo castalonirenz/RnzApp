@@ -16,10 +16,51 @@
   margin: 0;
 }
 
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.searchInput {
+  min-width: 280px;
+  height: 42px;
+  padding: 0 0.8rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.resultCount {
+  margin: 0.35rem 0 0;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
 .loansGrid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1.5rem;
+}
+
+.pagination {
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.pageLabel {
+  color: #475569;
+  font-weight: 600;
 }
 
 .emptyState {
@@ -49,6 +90,11 @@
   .header {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .searchInput {
+    min-width: 100%;
+    width: 100%;
   }
 
   .loansGrid {
