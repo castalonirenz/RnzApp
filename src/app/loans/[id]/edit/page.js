@@ -43,8 +43,8 @@ export default function EditLoanPage() {
 
   useEffect(() => {
     if (!currentLoan) return;
-    if (currentLoan.status !== 'pending') {
-      setFormError('Only pending loans can be edited');
+    if (currentLoan.status !== 'pending' && currentLoan.status !== 'ongoing') {
+      setFormError('Only pending or ongoing loans can be edited');
       return;
     }
 
@@ -154,10 +154,10 @@ export default function EditLoanPage() {
     );
   }
 
-  if (currentLoan.status !== 'pending') {
+  if (currentLoan.status !== 'pending' && currentLoan.status !== 'ongoing') {
     return (
       <div className={styles.container}>
-        <Alert type="error">Only pending loans can be edited. This loan is {currentLoan.status}.</Alert>
+        <Alert type="error">Only pending or ongoing loans can be edited. This loan is {currentLoan.status}.</Alert>
         <Link href={`/loans/${params.id}`}>
           <Button variant="secondary">Back to Loan</Button>
         </Link>

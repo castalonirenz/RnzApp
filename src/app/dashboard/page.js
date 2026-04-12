@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
@@ -16,6 +16,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const { user, token, isAuthChecked } = useAuth();
   const { loans, isLoading, fetchLoans } = useLoans();
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     if (!isAuthChecked) {
@@ -48,6 +49,23 @@ export default function DashboardPage() {
       { totalLoans: 0, totalOriginally: 0, totalPaid: 0, totalOutstanding: 0 }
     );
   }, [loans]);
+
+  const filteredLoans = useMemo(() => {
+    const keyword = searchTerm.trim().toLowerCase();
+    if (!keyword) return loans;
+
+    return loans.filter((loan) =>
+      [
+        loan.borrower_name,
+        loan.borrower_contact,
+        loan.borrower_address,
+        loan.status,
+        String(loan.total_receivable ?? ''),
+      ]
+        .filter(Boolean)
+        .some((field) => String(field).toLowerCase().includes(keyword))
+    );
+  }, [loans, searchTerm]);
 
   if (!isAuthChecked || isLoading) {
     return (
@@ -100,8 +118,20 @@ export default function DashboardPage() {
 
       <div className={styles.section}>
         <div className={styles.sectionHeader}>
-          <h2>Loans You Lent</h2>
+          <div className={styles.sectionTitle}>
+            <h2>Loans You Lent</h2>
+            <p className={styles.resultCount}>
+              Showing {filteredLoans.length} of {loans.length} loans
+            </p>
+          </div>
           <div className={styles.headerActions}>
+            <input
+              type="search"
+              className={styles.searchInput}
+              placeholder="Search loans..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
             <Link href="/expenses">
               <Button variant="secondary">Expenses</Button>
             </Link>
@@ -112,8 +142,9 @@ export default function DashboardPage() {
         </div>
 
         {loans && loans.length > 0 ? (
+          filteredLoans.length > 0 ? (
           <div className={styles.loansList}>
-            {loans.slice(0, 3).map((loan) => (
+            {filteredLoans.slice(0, 3).map((loan) => (
               <Card key={loan.id}>
                 <div className={styles.loanRow}>
                   <div className={styles.loanInfo}>
@@ -137,6 +168,14 @@ export default function DashboardPage() {
               </Card>
             ))}
           </div>
+          ) : (
+            <Card>
+              <div className={styles.emptyState}>
+                <h3>No matching loans</h3>
+                <p>Try a different search keyword.</p>
+              </div>
+            </Card>
+          )
         ) : (
           <Card>
             <div className={styles.emptyState}>
@@ -149,7 +188,7 @@ export default function DashboardPage() {
           </Card>
         )}
 
-        {loans && loans.length > 3 && (
+        {filteredLoans && filteredLoans.length > 3 && (
           <Link href="/loans">
             <Button variant="secondary" size="lg">View All Loans</Button>
           </Link>
