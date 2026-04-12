@@ -347,7 +347,7 @@ export default function LoanDetailPage() {
             <h2>Loan Not Started</h2>
             <p>Set this loan to Ongoing before recording repayments.</p>
             <Button variant="primary" size="lg" onClick={handleMarkOngoing} disabled={isSubmitting}>
-              {isSubmitting ? 'Updating Status...' : 'Mark as Ongoing'}
+              {isSubmitting ? 'Updating Status...' : 'Release loan'}
             </Button>
           </Card>
         )}
