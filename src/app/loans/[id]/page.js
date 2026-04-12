@@ -156,7 +156,7 @@ export default function LoanDetailPage() {
   
     try {
       await updateLoanStatus(currentLoan.id, 'ongoing', releaseDate);
-      setSuccess('Loan status updated to Ongoing.');
+      setSuccess('Loan update successfully!');
       await fetchLoanById(params.id);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to update loan status');
@@ -357,12 +357,15 @@ export default function LoanDetailPage() {
           </div>
         </Card>
 
+         {error && <Alert type="error" onClose={() => setError('')}>{error}</Alert>}
+            {success && <Alert type="success" onClose={() => setSuccess('')}>{success}</Alert>}
+
         {(currentLoan.status === 'pending' || currentLoan.status == "ongoing") && remaining > 0 && (
           <Card>
             <h2>{currentLoan.status == "pending" ? "Loan not started" : "Ongoing loan"}</h2>
             <p>{currentLoan.status == "pending" ? "Set this loan to Ongoing before recording repayments." : "You can update the release date below"}</p>
 
-            {error && <Alert type="error" onClose={() => setError('')}>{error}</Alert>}
+          
             {/* Date Picker */}
             <div className="mb-3">
               <label htmlFor="releaseDate" className="form-label">
@@ -388,8 +391,7 @@ export default function LoanDetailPage() {
         {currentLoan.status === 'ongoing' && remaining > 0 && (
           <Card>
             <h2>Record Payment</h2>
-            {error && <Alert type="error" onClose={() => setError('')}>{error}</Alert>}
-            {success && <Alert type="success" onClose={() => setSuccess('')}>{success}</Alert>}
+           
 
             <form onSubmit={handleAddPayment} className={styles.paymentForm}>
               <Input
