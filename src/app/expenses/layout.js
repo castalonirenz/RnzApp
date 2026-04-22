@@ -9,7 +9,7 @@ const NAV_ITEMS = [
   { href: '/expenses', label: 'Overview' },
   { href: '/expenses/list', label: 'Expense List' },
   { href: '/expenses/add', label: 'Add Expense' },
-  { href: '/expenses/budgets', label: 'Create Budget' },
+  { href: '/expenses/budgets', label: 'Budget' },
 ];
 
 const isItemActive = (pathname, href) => {
