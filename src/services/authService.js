@@ -52,9 +52,12 @@ export const authService = {
   },
 
   logout: async () => {
-    await apiClient.post('/logout');
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    try {
+      await apiClient.post('/logout');
+    } finally {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+    }
   },
 
   getCurrentUser: async () => {

@@ -168,6 +168,24 @@ Body:
 }
 ```
 
+### `PATCH /expenses/:id`
+Protected. Updates one or more expense fields.
+Body (partial):
+
+```json
+{
+  "title": "Transportation Updated",
+  "amount": 150.75,
+  "category": "Travel",
+  "notes": "Ride share",
+  "expense_date": "2026-04-08T09:00:00.000Z",
+  "budget_id": "6805b6a4ad7469ff73766f2a"
+}
+```
+
+- At least one updatable field is required.
+- `budget_id: null` removes the budget association.
+
 ### `DELETE /expenses/:id`
 Protected.
 
@@ -180,3 +198,64 @@ Returns grouped totals:
   { "period": "2026-04", "total": 5300.75 }
 ]
 ```
+
+## Budgets
+
+### Budget object
+
+```json
+{
+  "id": 1,
+  "user_id": 1,
+  "name": "Food Budget",
+  "amount_limit": 5000,
+  "period_type": "monthly",
+  "start_date": "2026-04-01T00:00:00.000Z",
+  "end_date": null,
+  "total_spent": 1200,
+  "remaining_balance": 3800,
+  "created_at": "2026-04-08T07:10:10.000Z",
+  "updated_at": "2026-04-08T07:10:10.000Z"
+}
+```
+
+### `GET /budgets`
+Protected. Returns user budgets.
+
+### `POST /budgets`
+Protected.
+Body:
+
+```json
+{
+  "name": "Food Budget",
+  "amount_limit": 5000,
+  "period_type": "monthly"
+}
+```
+
+### `PATCH /budgets/:id`
+Protected. Updates one or more budget fields.
+Body (partial):
+
+```json
+{
+  "name": "Food Budget Updated",
+  "amount_limit": 6000,
+  "period_type": "monthly",
+  "start_date": "2026-04-01T00:00:00.000Z",
+  "end_date": null
+}
+```
+
+- At least one updatable field is required.
+- If the new budget window excludes linked expenses, API returns `409`.
+
+### `DELETE /budgets/:id`
+Protected.
+
+- Detaches linked expenses (`budget_id = null`) before deleting the budget.
+- Returns `204` on success.
+
+### `GET /budgets/:id/export?format=csv|pdf`
+Protected. Exports budget report file.

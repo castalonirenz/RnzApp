@@ -15,7 +15,7 @@ export default function Header() {
     try {
       await logout();
       setIsOpen(false);
-      router.push('/');
+      router.replace('/login');
     } catch (error) {
       console.error('Logout failed:', error);
     }
