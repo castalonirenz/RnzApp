@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import styles from './Header.module.css';
@@ -9,7 +9,14 @@ import styles from './Header.module.css';
 export default function Header() {
   const { user, token, logout } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+
+  const isActiveRoute = (href) => {
+    if (!pathname) return false;
+    if (href === '/') return pathname === '/';
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
 
   const handleLogout = async () => {
     try {
@@ -42,9 +49,33 @@ export default function Header() {
         {token ? (
           <nav className={`${styles.nav} ${isOpen ? styles.navOpen : ''}`}>
             <ul className={styles.navList}>
-              <li><Link href="/dashboard" className={styles.navLink} onClick={() => setIsOpen(false)}>Dashboard</Link></li>
-              <li><Link href="/loans" className={styles.navLink} onClick={() => setIsOpen(false)}>My Lending</Link></li>
-              <li><Link href="/expenses" className={styles.navLink} onClick={() => setIsOpen(false)}>Expenses</Link></li>
+              <li>
+                <Link
+                  href="/dashboard"
+                  className={`${styles.navLink} ${isActiveRoute('/dashboard') ? styles.navLinkActive : ''}`}
+                  onClick={() => setIsOpen(false)}
+                >
+                  Dashboard
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/loans"
+                  className={`${styles.navLink} ${isActiveRoute('/loans') ? styles.navLinkActive : ''}`}
+                  onClick={() => setIsOpen(false)}
+                >
+                  My Lending
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/expenses"
+                  className={`${styles.navLink} ${isActiveRoute('/expenses') ? styles.navLinkActive : ''}`}
+                  onClick={() => setIsOpen(false)}
+                >
+                  Expenses
+                </Link>
+              </li>
               <li className={styles.userMenu}>
                 <span className={styles.userName}>{user?.name || user?.email || 'My Account'}</span>
                 <button onClick={handleLogout} className={styles.logoutBtn}>
@@ -56,8 +87,24 @@ export default function Header() {
         ) : (
           <nav className={`${styles.nav} ${isOpen ? styles.navOpen : ''}`}>
             <ul className={styles.navList}>
-              <li><Link href="/login" className={styles.navLink} onClick={() => setIsOpen(false)}>Login</Link></li>
-              <li><Link href="/register" className={`${styles.navLink} ${styles.registerLink}`} onClick={() => setIsOpen(false)}>Register</Link></li>
+              <li>
+                <Link
+                  href="/login"
+                  className={`${styles.navLink} ${isActiveRoute('/login') ? styles.navLinkActive : ''}`}
+                  onClick={() => setIsOpen(false)}
+                >
+                  Login
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/register"
+                  className={`${styles.navLink} ${styles.registerLink} ${isActiveRoute('/register') ? styles.navLinkActive : ''}`}
+                  onClick={() => setIsOpen(false)}
+                >
+                  Register
+                </Link>
+              </li>
             </ul>
           </nav>
         )}

@@ -1,13 +1,22 @@
 .container {
-  max-width: 980px;
+  max-width: 1080px;
   margin: 0 auto;
   display: grid;
   gap: 1rem;
 }
 
+.header {
+  border: 1px solid #d3e0ea;
+  border-radius: 20px;
+  padding: 1rem 1.1rem;
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.98), rgba(243, 248, 253, 0.96));
+  box-shadow: 0 12px 28px rgba(17, 32, 50, 0.1);
+}
+
 .header p {
   margin: 0.25rem 0 0;
-  color: #64748b;
+  color: #5d7288;
 }
 
 .form {
@@ -27,26 +36,28 @@
 }
 
 .fieldLabel {
-  font-size: 0.9rem;
-  color: #334155;
-  font-weight: 600;
+  font-size: 0.82rem;
+  color: #30465d;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .selectInput {
   width: 100%;
   height: 42px;
-  border: 1px solid #cbd5e1;
-  border-radius: 0.5rem;
+  border: 1px solid #c7d7e5;
+  border-radius: 12px;
   padding: 0 0.8rem;
   font-size: 0.92rem;
-  color: #0f172a;
+  color: #13283e;
   background-color: #fff;
 }
 
 .selectInput:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  border-color: #0f766e;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.14);
 }
 
 .budgetList {
@@ -56,10 +67,10 @@
 }
 
 .budgetCard {
-  border: 1px solid #dbeafe;
-  border-radius: 0.6rem;
-  background: linear-gradient(180deg, #f8fafc, #f0f9ff);
-  padding: 0.75rem;
+  border: 1px solid #c7d7e5;
+  border-radius: 16px;
+  background: linear-gradient(178deg, #fbfdff, #f0f7ff);
+  padding: 0.78rem;
   display: grid;
   gap: 0.55rem;
 }
@@ -77,30 +88,30 @@
 
 .budgetCardHeader p {
   margin: 0.2rem 0 0;
-  color: #64748b;
-  font-size: 0.83rem;
+  color: #5d7288;
+  font-size: 0.81rem;
 }
 
 .budgetMeta {
   display: flex;
   justify-content: space-between;
   gap: 0.5rem;
-  color: #475569;
-  font-size: 0.84rem;
+  color: #3f556c;
+  font-size: 0.82rem;
 }
 
 .progressTrack {
   width: 100%;
   height: 8px;
   border-radius: 999px;
-  background: #e2e8f0;
+  background: #dce7f0;
   overflow: hidden;
 }
 
 .progressBar {
   height: 100%;
   border-radius: inherit;
-  transition: width 0.2s ease-out;
+  transition: width 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .exportButtons {

@@ -1,36 +1,37 @@
 .shell {
   width: 100%;
-  max-width: 1220px;
+  max-width: 1260px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 240px 1fr;
+  grid-template-columns: 260px 1fr;
   gap: 1rem;
   padding: 0 0.5rem;
 }
 
 .sidebar {
   position: sticky;
-  top: 84px;
+  top: 88px;
   align-self: start;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.75rem;
-  padding: 1rem;
+  background: linear-gradient(176deg, #ffffff, #f4f8fc);
+  border: 1px solid #d5e1ec;
+  border-radius: 20px;
+  padding: 0.9rem;
+  box-shadow: 0 12px 28px rgba(17, 32, 50, 0.1);
 }
 
 .sidebarHeader h3 {
   margin: 0;
-  font-size: 1rem;
+  font-size: 1.04rem;
 }
 
 .sidebarHeader p {
-  margin: 0.25rem 0 0;
-  color: #64748b;
-  font-size: 0.82rem;
+  margin: 0.2rem 0 0;
+  color: #5d7288;
+  font-size: 0.81rem;
 }
 
 .nav {
-  margin-top: 0.9rem;
+  margin-top: 0.85rem;
   display: grid;
   gap: 0.45rem;
 }
@@ -38,26 +39,31 @@
 .navLink {
   display: block;
   text-decoration: none;
-  border-radius: 0.55rem;
-  padding: 0.65rem 0.75rem;
-  font-size: 0.92rem;
-  font-weight: 600;
-  color: #334155;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  border-radius: 12px;
+  padding: 0.62rem 0.72rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #2d4258;
+  background: #f5f9fd;
+  border: 1px solid #d5e1ec;
+  transition:
+    transform 150ms ease,
+    background-color 150ms ease,
+    color 150ms ease,
+    border-color 150ms ease;
 }
 
 .navLink:hover {
-  background: #eef2ff;
-  color: #1d4ed8;
-  border-color: #bfdbfe;
+  transform: translateX(2px);
+  background: #e9f4f4;
+  color: #0f766e;
+  border-color: #b8d8d5;
 }
 
 .navLinkActive {
-  background: #dbeafe;
-  border-color: #60a5fa;
-  color: #1e40af;
+  background: linear-gradient(145deg, #d7f1ee, #e6f6f4);
+  border-color: #89c9c3;
+  color: #0c655f;
 }
 
 .content {
@@ -69,19 +75,19 @@
 }
 
 .menuButton {
-  border: 1px solid #cbd5e1;
-  border-radius: 0.55rem;
+  border: 1px solid #c7d7e5;
+  border-radius: 12px;
   background: #ffffff;
-  color: #0f172a;
-  padding: 0.5rem 0.8rem;
-  font-size: 0.9rem;
-  font-weight: 600;
+  color: #1b3248;
+  padding: 0.5rem 0.82rem;
+  font-size: 0.86rem;
+  font-weight: 700;
 }
 
 .mobileTitle {
-  font-size: 0.94rem;
-  color: #334155;
-  font-weight: 700;
+  font-size: 0.92rem;
+  color: #2c4258;
+  font-weight: 800;
 }
 
 .page {
@@ -93,7 +99,7 @@
   inset: 0;
   z-index: 39;
   border: none;
-  background: rgba(15, 23, 42, 0.45);
+  background: rgba(15, 29, 45, 0.45);
 }
 
 .drawer {
@@ -101,11 +107,11 @@
   top: 0;
   left: 0;
   z-index: 40;
-  width: min(85vw, 320px);
+  width: min(86vw, 320px);
   height: 100vh;
-  background: #ffffff;
-  border-right: 1px solid #e2e8f0;
-  box-shadow: 0 14px 32px rgba(2, 6, 23, 0.2);
+  background: linear-gradient(180deg, #ffffff, #f4f8fc);
+  border-right: 1px solid #d5e1ec;
+  box-shadow: 0 18px 36px rgba(15, 29, 45, 0.24);
   padding: 1rem;
   display: grid;
   grid-template-rows: auto 1fr;
@@ -125,13 +131,13 @@
 }
 
 .closeButton {
-  border: 1px solid #cbd5e1;
-  border-radius: 0.5rem;
-  background: #f8fafc;
-  color: #334155;
-  padding: 0.45rem 0.65rem;
-  font-size: 0.82rem;
-  font-weight: 600;
+  border: 1px solid #c7d7e5;
+  border-radius: 10px;
+  background: #edf4fb;
+  color: #2d4258;
+  padding: 0.42rem 0.64rem;
+  font-size: 0.8rem;
+  font-weight: 700;
 }
 
 .drawerNav {
@@ -153,7 +159,7 @@
   .mobileBar {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
-    margin-bottom: 0.75rem;
+    gap: 0.55rem;
+    margin-bottom: 0.7rem;
   }
 }
