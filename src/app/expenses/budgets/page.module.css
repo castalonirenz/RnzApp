@@ -1,0 +1,147 @@
+.container {
+  max-width: 1080px;
+  margin: 0 auto;
+  display: grid;
+  gap: 1rem;
+}
+
+.header {
+  border: 1px solid #d3e0ea;
+  border-radius: 20px;
+  padding: 1rem 1.1rem;
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.98), rgba(243, 248, 253, 0.96));
+  box-shadow: 0 12px 28px rgba(17, 32, 50, 0.1);
+}
+
+.header p {
+  margin: 0.25rem 0 0;
+  color: #5d7288;
+}
+
+.form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.formActions {
+  display: flex;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.field {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.fieldLabel {
+  font-size: 0.82rem;
+  color: #30465d;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.selectInput {
+  width: 100%;
+  height: 42px;
+  border: 1px solid #c7d7e5;
+  border-radius: 12px;
+  padding: 0 0.8rem;
+  font-size: 0.92rem;
+  color: #13283e;
+  background-color: #fff;
+}
+
+.selectInput:focus {
+  outline: none;
+  border-color: #0f766e;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.14);
+}
+
+.budgetList {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.6rem;
+}
+
+.budgetCard {
+  border: 1px solid #c7d7e5;
+  border-radius: 16px;
+  background: linear-gradient(178deg, #fbfdff, #f0f7ff);
+  padding: 0.78rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.budgetCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.8rem;
+}
+
+.budgetCardHeader h4 {
+  margin: 0;
+}
+
+.budgetCardHeader p {
+  margin: 0.2rem 0 0;
+  color: #5d7288;
+  font-size: 0.81rem;
+}
+
+.budgetMeta {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  color: #3f556c;
+  font-size: 0.82rem;
+}
+
+.progressTrack {
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: #dce7f0;
+  overflow: hidden;
+}
+
+.progressBar {
+  height: 100%;
+  border-radius: inherit;
+  transition: width 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.exportButtons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.cardActions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.cardActions a {
+  text-decoration: none;
+}
+
+@media (max-width: 768px) {
+  .budgetCardHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .budgetMeta {
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .formActions {
+    width: 100%;
+  }
+}

@@ -77,10 +77,15 @@ export const useAuthStore = create((set) => ({
     set({ isLoading: true });
     try {
       await authService.logout();
-      set({ user: null, token: null, isAuthChecked: true, isLoading: false });
     } catch (error) {
-      set({ error: 'Logout failed', isLoading: false });
+      // Ignore API errors on logout; local session must still be cleared.
+    } finally {
+      set({ user: null, token: null, isAuthChecked: true, isLoading: false, error: null });
     }
+  },
+
+  forceLogout: () => {
+    set({ user: null, token: null, isAuthChecked: true, isLoading: false, error: null });
   },
 
   checkAuth: async () => {
@@ -100,7 +105,7 @@ export const useAuthStore = create((set) => ({
     try {
       const currentUser = await authService.getCurrentUser();
       set({ user: currentUser, token, isAuthChecked: true });
-    } catch {
+    } catch (error) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       set({ user: null, token: null, isAuthChecked: true });
