@@ -8,6 +8,7 @@ import Card from '@/components/Card';
 import Button from '@/components/Button';
 import Input from '@/components/Input';
 import Alert from '@/components/Alert';
+import ReceiptAmountAssistant from '@/components/ReceiptAmountAssistant';
 import { formatCurrency } from '@/utils/calculations';
 import styles from './page.module.css';
 
@@ -53,6 +54,11 @@ export default function AddExpensePage() {
   });
   const [formError, setFormError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+
+  const handleAmountDetected = (amountText) => {
+    setForm((prev) => ({ ...prev, amount: amountText }));
+    setFormError('');
+  };
 
   const selectedBudget = useMemo(
     () => budgets.find((budget) => String(budget.id) === String(form.budget_id)) || null,
@@ -207,6 +213,7 @@ export default function AddExpensePage() {
                 placeholder="0.00"
                 required
               />
+              <ReceiptAmountAssistant onAmountDetected={handleAmountDetected} />
               <Input
                 label="Date & Time"
                 type="datetime-local"

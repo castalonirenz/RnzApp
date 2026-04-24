@@ -1,0 +1,86 @@
+.wrapper {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.68rem 0.72rem;
+  border: 1px solid #d7e3ef;
+  border-radius: 12px;
+  background: #fafcff;
+}
+
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.label {
+  font-size: 0.82rem;
+  color: #30465d;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.fileInput {
+  width: 100%;
+  border: 1px dashed #b8cbdd;
+  border-radius: 10px;
+  padding: 0.5rem;
+  font-size: 0.9rem;
+  color: #173047;
+  background: #fff;
+}
+
+.fileInput:focus {
+  outline: none;
+  border-color: #0f766e;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+}
+
+.helperText {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #5d7288;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.errorText {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #b12d22;
+}
+
+.successText {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #0f766e;
+}
+
+.previewBox {
+  border: 1px solid #d4e2ef;
+  border-radius: 10px;
+  padding: 0.55rem;
+  background: #fff;
+}
+
+.previewLabel {
+  margin: 0 0 0.42rem;
+  font-size: 0.8rem;
+  color: #3a536b;
+  font-weight: 600;
+}
+
+.previewImage {
+  width: 100%;
+  max-height: 280px;
+  object-fit: contain;
+  border-radius: 8px;
+  border: 1px solid #e2ebf3;
+  background: #f9fbfe;
+}
+
