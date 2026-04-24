@@ -24,7 +24,9 @@ const toUiPercentRate = (apiRate) => {
 
 const toApiDecimalRate = (uiRate) => {
   const n = toNumber(uiRate, 0);
-  return n > 1 ? n / 100 : n;
+  // UI always captures rates as percentages (e.g. 5, 0.79), while
+  // API expects decimal form (e.g. 0.05, 0.0079).
+  return n / 100;
 };
 
 const toUiInterestPeriod = (interestType) => {
