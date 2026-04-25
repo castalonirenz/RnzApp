@@ -47,7 +47,7 @@ export default function LoginPage() {
   return (
     <div className={styles.container}>
       <Card className={styles.card}>
-        <h1>Login to My Borrower</h1>
+        <h1>Login to Personal Tracker</h1>
         <p className={styles.subtitle}>Enter your credentials to access your account</p>
 
         {(error || formError) && (

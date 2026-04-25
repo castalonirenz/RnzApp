@@ -1,7 +1,7 @@
 {
-  "name": "My Borrower Tracker",
-  "short_name": "MyBorrower",
-  "description": "Track loans, payments, and expenses.",
+  "name": "Personal Tracker",
+  "short_name": "PTracker",
+  "description": "Track lending, expenses, and shared costs.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
