@@ -1,13 +1,14 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useExpenses } from '@/hooks/useExpenses';
 import Card from '@/components/Card';
 import Button from '@/components/Button';
 import Input from '@/components/Input';
 import Alert from '@/components/Alert';
+import ReceiptAmountAssistant from '@/components/ReceiptAmountAssistant';
 import { formatCurrency } from '@/utils/calculations';
 import styles from './page.module.css';
 
@@ -29,6 +30,8 @@ const toDateTimeLocal = (date = new Date()) => {
 
 export default function AddExpensePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const preselectedBudgetId = searchParams.get('budget_id') || searchParams.get('budgetId') || '';
   const { token, isAuthChecked } = useAuth();
   const {
     budgets,
@@ -48,16 +51,23 @@ export default function AddExpensePage() {
     amount: '',
     category: '',
     notes: '',
-    budget_id: '',
+    budget_id: preselectedBudgetId,
     expense_date: toDateTimeLocal(),
   });
   const [formError, setFormError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
+  const handleAmountDetected = (amountText) => {
+    setForm((prev) => ({ ...prev, amount: amountText }));
+    setFormError('');
+  };
+
   const selectedBudget = useMemo(
     () => budgets.find((budget) => String(budget.id) === String(form.budget_id)) || null,
     [budgets, form.budget_id]
   );
+
+  console.log('Selected budget for debugging:', selectedBudget);
 
   const selectedBudgetSnapshot = useMemo(() => {
     if (!selectedBudget) return null;
@@ -151,7 +161,7 @@ export default function AddExpensePage() {
         amount: '',
         category: '',
         notes: '',
-        budget_id: '',
+        budget_id: preselectedBudgetId || '',
         expense_date: toDateTimeLocal(),
       });
       setSuccessMessage('Expense saved successfully.');
@@ -207,6 +217,7 @@ export default function AddExpensePage() {
                 placeholder="0.00"
                 required
               />
+              {/* <ReceiptAmountAssistant onAmountDetected={handleAmountDetected} /> */}
               <Input
                 label="Date & Time"
                 type="datetime-local"

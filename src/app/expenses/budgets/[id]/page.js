@@ -130,6 +130,10 @@ export default function BudgetDetailPage() {
         <Link href="/expenses/list">
           <Button variant="secondary">All Expenses</Button>
         </Link>
+
+         <Link href={`/expenses/add?budget_id=${encodeURIComponent(budgetId)}`}>
+          <Button variant="secondary">Add Expense</Button>
+        </Link>
       </div>
 
       <Card>

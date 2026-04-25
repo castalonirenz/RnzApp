@@ -12,9 +12,9 @@ export default function Home() {
   return (
     <div className={styles.hero}>
       <div className={styles.heroContent}>
-        <h1 className={styles.title}>Welcome to My Lending Tracker</h1>
+        <h1 className={styles.title}>Welcome to My Personal Tracker</h1>
         <p className={styles.subtitle}>
-          Manage the money you lend and track borrower payments with ease
+          Manage your personal finances and track expenses with ease
         </p>
 
         {user ? (
