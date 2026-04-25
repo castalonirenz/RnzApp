@@ -38,7 +38,7 @@ export default function AddSharedExpensePage() {
         <div className={styles.content}>
           <h1>Create New Shared Expense</h1>
           <p className={styles.description}>
-            Add a new shared expense and split it equally among participants.
+            Add a shared expense and choose equal or custom split among participants.
           </p>
 
           {error && <Alert type="error" message={error} />}

@@ -14,6 +14,13 @@ export default function SharedExpenseTable({
   onExport,
 }) {
   const [selectedExpense, setSelectedExpense] = useState(null);
+  const getParticipantNames = (expense) => {
+    if (!Array.isArray(expense?.participants)) return [];
+    return expense.participants
+      .map((participant) => (typeof participant === 'string' ? participant : participant?.name))
+      .filter(Boolean);
+  };
+
   if (expenses.length === 0) {
     return (
       <div className={styles.emptyState}>
@@ -92,30 +99,37 @@ export default function SharedExpenseTable({
                   </span>
                 </td>
                 <td className={styles.participantsCell}>
+                  {(() => {
+                    const participantNames = getParticipantNames(expense);
+                    return (
                   <Tooltip
-                    content={expense.participants.join(', ')}
+                    content={participantNames.join(', ')}
                   >
                     <div className={styles.participantsList}>
-                      {expense.participants.slice(0, 2).map((participant, idx) => (
+                      {participantNames.slice(0, 2).map((participant, idx) => (
                         <Badge key={idx} variant="info">
                           {participant}
                         </Badge>
                       ))}
-                      {expense.participants.length > 2 && (
+                      {participantNames.length > 2 && (
                         <Badge 
                           variant="info"
                           className={styles.moreParticipants}
                           onClick={() => setSelectedExpense(expense)}
                         >
-                          +{expense.participants.length - 2}
+                          +{participantNames.length - 2}
                         </Badge>
                       )}
                     </div>
                   </Tooltip>
+                    );
+                  })()}
                 </td>
                 <td className={styles.shareCell}>
                   <span className={styles.share}>
-                    {formatCurrency(expense.share_per_person)}
+                    {expense.split_mode === 'custom'
+                      ? 'Custom'
+                      : formatCurrency(expense.share_per_person)}
                   </span>
                 </td>
                 <td className={styles.dateCell}>

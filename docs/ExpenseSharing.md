@@ -1,45 +1,84 @@
-💸 Shared Expense Tracking Feature
-📌 Overview
+# Shared Expense Tracking Feature
 
-The Shared Expense Tracking feature enables users to create, edit, and manage shared expenses. Users can freely input participant names (no predefined users required), split expenses equally, and download a summary for tracking and sharing.
+## Overview
 
-The tracker is displayed in a table format for easy viewing and management.
+Shared Expense Tracking lets users create, edit, and manage expenses shared by multiple people.
+Participants are free-text names (no account needed), and splits can be:
 
-✨ Features
-🧾 Expense Management
-Create Expense
-Add title, description, total amount, and date
-Edit Expense
-Update any existing expense details
-Delete Expense
-Remove expenses from the tracker
-👥 Participant Tagging (Free Text)
-Input participant names manually (no user account required)
-Flexible tagging (e.g., “John”, “Team A”, “Roommates”)
-⚖️ Automatic Equal Splitting
-Total amount is divided equally among all participants
-Real-time calculation of individual shares
-📊 Table View Display
-All expenses are displayed in a structured table
-Includes:
-Expense Title
-Total Amount
-Participants
-Share per Person
-Actions (Edit / Delete)
-📥 Downloadable Report
-Export expenses into:
-CSV
-PDF (optional)
-Includes full breakdown of all tracked expenses
-🧩 Use Case
-User creates an expense:
-Title: "Dinner"
-Amount: ₱2000
-Participants: John, Jane, Mike
-System calculates:
-₱2000 ÷ 3 = ₱666.67 per person
-Expense appears in the table
-User can:
-Edit the expense
-Delete it
+- **Equal split**: everyone pays the same
+- **Custom split**: each person pays a different amount
+
+This is useful when one person consumes less (for example, only added water to the receipt).
+
+---
+
+## Features
+
+### Expense Management
+
+- Create expense (title, amount, description, participants)
+- Edit expense details
+- Delete expense
+
+### Participant Tagging (Free Text)
+
+- Enter names manually (for example: `John, Jane, Mike`)
+- No predefined user list required
+
+### Dynamic Split Options
+
+- Equal split (auto-divide amount by participant count)
+- Custom split (manual amount per participant)
+- Frontend validates custom sum equals total amount
+
+### Table View
+
+Each expense row includes:
+
+- Expense Title
+- Total Amount
+- Participants
+- Share column (`equal amount` or `Custom`)
+- Date
+- Actions (View/Edit/Delete)
+
+### Downloadable Report
+
+- Export CSV
+- Export PDF
+- Includes split details per participant
+
+---
+
+## Use Cases
+
+### Equal Split Example
+
+- Title: `Dinner`
+- Total: `PHP 2000`
+- Participants: `John, Jane, Mike`
+- Result: `PHP 666.67` each
+
+### Custom Split Example
+
+- Title: `Dinner + Water`
+- Total: `PHP 2000`
+- Participants: `John, Jane, Mike`
+- Custom shares:
+  - John: `PHP 900`
+  - Jane: `PHP 900`
+  - Mike: `PHP 200`
+
+---
+
+## API Notes
+
+Backend integration details are documented in:
+
+- [SHARED_EXPENSES_BACKEND_INTEGRATION.md](./SHARED_EXPENSES_BACKEND_INTEGRATION.md)
+
+Key fields expected by frontend:
+
+- `split_mode`: `equal` or `custom`
+- `participant_shares`: array of `{ name, amount }`
+
