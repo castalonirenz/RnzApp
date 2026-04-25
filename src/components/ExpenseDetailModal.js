@@ -17,6 +17,28 @@ export default function ExpenseDetailModal({ expense, isOpen, onClose, onEdit, o
 
   if (!isOpen || !expense) return null;
 
+  const participantNames = Array.isArray(expense.participants)
+    ? expense.participants
+        .map((participant) => (typeof participant === 'string' ? participant : participant?.name))
+        .filter(Boolean)
+    : [];
+
+  const participantShareMap = Array.isArray(expense.participant_shares)
+    ? expense.participant_shares.reduce((acc, item) => {
+        const name = String(item?.name ?? '').trim();
+        const amount = Number(item?.amount);
+        if (name && Number.isFinite(amount)) {
+          acc[name] = amount;
+        }
+        return acc;
+      }, {})
+    : {};
+
+  const resolveParticipantShare = (name) => {
+    if (Number.isFinite(participantShareMap[name])) return participantShareMap[name];
+    return expense.share_per_person;
+  };
+
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-PH', {
       style: 'currency',
@@ -71,20 +93,24 @@ export default function ExpenseDetailModal({ expense, isOpen, onClose, onEdit, o
 
           <div className={styles.section}>
             <div className={styles.field}>
-              <label>Share Per Person</label>
-              <p className={styles.share}>{formatCurrency(expense.share_per_person)}</p>
+              <label>{expense.split_mode === 'custom' ? 'Split Mode' : 'Share Per Person'}</label>
+              <p className={styles.share}>
+                {expense.split_mode === 'custom'
+                  ? 'Custom per participant'
+                  : formatCurrency(expense.share_per_person)}
+              </p>
             </div>
           </div>
 
           <div className={styles.section}>
             <div className={styles.field}>
-              <label>Participants ({expense.participants.length})</label>
+              <label>Participants ({participantNames.length})</label>
               <div className={styles.participantsList}>
-                {expense.participants.map((participant, idx) => (
+                {participantNames.map((participant, idx) => (
                   <div key={idx} className={styles.participantItem}>
                     <span className={styles.participantName}>{participant}</span>
                     <span className={styles.participantShare}>
-                      {formatCurrency(expense.share_per_person)}
+                      {formatCurrency(resolveParticipantShare(participant))}
                     </span>
                   </div>
                 ))}

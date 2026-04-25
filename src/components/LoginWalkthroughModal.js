@@ -27,11 +27,12 @@ const WALKTHROUGH_ITEMS = [
   {
     title: 'Shared Expenses',
     detail: 'Split costs with participants and export reports when needed.',
-  },
-  {
-    title: 'Receipt Amount Assist',
-    detail: 'Upload a receipt image and auto-fill expense amount using local Ollama.',
-  },
+  }
+  ,
+  // {
+  //   title: 'Receipt Amount Assist',
+  //   detail: 'Upload a receipt image and auto-fill expense amount using local Ollama.',
+  // },
 ];
 
 export default function LoginWalkthroughModal() {

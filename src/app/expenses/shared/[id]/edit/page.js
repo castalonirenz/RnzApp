@@ -87,7 +87,7 @@ export default function EditSharedExpensePage() {
         <div className={styles.content}>
           <h1>Edit Shared Expense</h1>
           <p className={styles.description}>
-            Update the details of your shared expense.
+            Update details and adjust equal/custom split amounts.
           </p>
 
           {error && <Alert type="error" message={error} />}
