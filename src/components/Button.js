@@ -2,12 +2,29 @@
 
 import styles from './Button.module.css';
 
-export default function Button({ children, variant = 'primary', size = 'md', disabled = false, ...props }) {
+const normalizeSize = (size) => {
+  if (!size) return 'md';
+  if (size === 'small') return 'sm';
+  if (size === 'medium') return 'md';
+  if (size === 'large') return 'lg';
+  return size;
+};
+
+export default function Button({
+  children,
+  variant = 'primary',
+  size = 'md',
+  disabled = false,
+  className = '',
+  ...props
+}) {
+  const normalizedSize = normalizeSize(size);
   const buttonClass = [
     styles.button,
     styles[variant],
-    styles[size],
+    styles[normalizedSize],
     disabled && styles.disabled,
+    className,
   ].filter(Boolean).join(' ');
 
   return (

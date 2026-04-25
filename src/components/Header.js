@@ -76,6 +76,15 @@ export default function Header() {
                   Expenses
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/expenses/shared"
+                  className={`${styles.navLink} ${isActiveRoute('/expenses/shared') ? styles.navLinkActive : ''}`}
+                  onClick={() => setIsOpen(false)}
+                >
+                  Shared Expenses
+                </Link>
+              </li>
               <li className={styles.userMenu}>
                 <span className={styles.userName}>{user?.name || user?.email || 'My Account'}</span>
                 <button onClick={handleLogout} className={styles.logoutBtn}>
