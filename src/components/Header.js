@@ -33,7 +33,7 @@ export default function Header() {
       <div className={styles.container}>
         <Link href="/" className={styles.logo}>
           <span className={styles.logoIcon}>$</span>
-          <span className={styles.logoText}>My Personal Tracker</span>
+          <span className={styles.logoText}>Personal Tracker</span>
         </Link>
 
         <button

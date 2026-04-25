@@ -1,4 +1,5 @@
 # Expense Sharing Backend Integration Guide
+# Expense Sharing Backend Integration Guide
 
 ## Overview
 

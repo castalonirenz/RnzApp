@@ -12,7 +12,7 @@ export default function Home() {
   return (
     <div className={styles.hero}>
       <div className={styles.heroContent}>
-        <h1 className={styles.title}>Welcome to My Personal Tracker</h1>
+        <h1 className={styles.title}>Welcome to Personal Tracker</h1>
         <p className={styles.subtitle}>
           Manage your personal finances and track expenses with ease
         </p>
@@ -47,7 +47,7 @@ export default function Home() {
       </div>
 
       <div className={styles.features}>
-        <h2>Why Choose My Borrower?</h2>
+        <h2>Why Choose Personal Tracker?</h2>
         <div className={styles.featureGrid}>
           <Card>
             <div className={styles.featureCard}>
