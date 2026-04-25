@@ -408,6 +408,13 @@ export default function ExpensesPage() {
                       />
                     </div>
                     <div className={styles.exportButtons}>
+
+                        <Link href={`/expenses/budgets/${budget.id}`}>
+                        <Button size="sm" variant="primary">
+                          View Expenses
+                        </Button>
+                      </Link>
+                      
                       <Button
                         size="sm"
                         variant="secondary"
