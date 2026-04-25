@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useExpenses } from '@/hooks/useExpenses';
 import Card from '@/components/Card';
@@ -30,6 +30,8 @@ const toDateTimeLocal = (date = new Date()) => {
 
 export default function AddExpensePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const preselectedBudgetId = searchParams.get('budget_id') || searchParams.get('budgetId') || '';
   const { token, isAuthChecked } = useAuth();
   const {
     budgets,
@@ -49,7 +51,7 @@ export default function AddExpensePage() {
     amount: '',
     category: '',
     notes: '',
-    budget_id: '',
+    budget_id: preselectedBudgetId,
     expense_date: toDateTimeLocal(),
   });
   const [formError, setFormError] = useState('');
@@ -159,7 +161,7 @@ export default function AddExpensePage() {
         amount: '',
         category: '',
         notes: '',
-        budget_id: '',
+        budget_id: preselectedBudgetId || '',
         expense_date: toDateTimeLocal(),
       });
       setSuccessMessage('Expense saved successfully.');
