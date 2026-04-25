@@ -65,6 +65,8 @@ export default function AddExpensePage() {
     [budgets, form.budget_id]
   );
 
+  console.log('Selected budget for debugging:', selectedBudget);
+
   const selectedBudgetSnapshot = useMemo(() => {
     if (!selectedBudget) return null;
 
