@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useExpenses } from '@/hooks/useExpenses';
@@ -28,7 +29,7 @@ const toDateTimeLocal = (date = new Date()) => {
   return new Date(date.getTime() - offsetMinutes * 60000).toISOString().slice(0, 19);
 };
 
-export default function AddExpensePage() {
+function AddExpensePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const preselectedBudgetId = searchParams.get('budget_id') || searchParams.get('budgetId') || '';
@@ -308,5 +309,13 @@ export default function AddExpensePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AddExpensePage() {
+  return (
+    <Suspense fallback={<div className={styles.container}>Loading add expense page...</div>}>
+      <AddExpensePageContent />
+    </Suspense>
   );
 }
