@@ -256,7 +256,7 @@ export default function EditExpensePage() {
                 placeholder="0.00"
                 required
               />
-              <ReceiptAmountAssistant onAmountDetected={handleAmountDetected} />
+              {/* <ReceiptAmountAssistant onAmountDetected={handleAmountDetected} /> */}
               <Input
                 label="Date & Time"
                 type="datetime-local"
