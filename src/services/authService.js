@@ -18,7 +18,14 @@ const extractAuthData = (payload) => {
 
 export const authService = {
   register: async (data) => {
-    const response = await apiClient.post('/register', data);
+    const payload = {
+      name: data?.name,
+      email: data?.email,
+      password: data?.password,
+      confirm_password: data?.confirm_password ?? data?.password_confirmation,
+    };
+
+    const response = await apiClient.post('/register', payload);
     const { token, user } = extractAuthData(response.data);
 
     if (token) {
@@ -32,6 +39,20 @@ export const authService = {
     }
 
     return { ...response.data, token, user };
+  },
+
+  forgotPassword: async (email) => {
+    const response = await apiClient.post('/forgot-password', { email });
+    return response?.data;
+  },
+
+  resetPassword: async ({ token, password, confirm_password }) => {
+    const response = await apiClient.post('/reset-password', {
+      token,
+      password,
+      confirm_password,
+    });
+    return response?.data;
   },
 
   login: async (email, password) => {

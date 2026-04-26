@@ -24,22 +24,6 @@
   margin-bottom: 2rem;
 }
 
-.forgotRow {
-  text-align: right;
-  margin-top: -1rem;
-  margin-bottom: 1.2rem;
-  font-size: 0.85rem;
-}
-
-.forgotRow a {
-  color: #3b82f6;
-  font-weight: 600;
-}
-
-.forgotRow a:hover {
-  text-decoration: underline;
-}
-
 .footer {
   text-align: center;
   color: #64748b;
@@ -82,3 +66,4 @@
     font-size: 1.25rem;
   }
 }
+
