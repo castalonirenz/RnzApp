@@ -1,7 +1,7 @@
 {
-  "name": "Personal Tracker",
-  "short_name": "PTracker",
-  "description": "Track lending, expenses, and shared costs.",
+  "name": "RNZ",
+  "short_name": "RNZ",
+  "description": "RNZ personal tracker for lending, expenses, and shared costs.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -10,16 +10,22 @@
   "theme_color": "#1e293b",
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "/icon/rnz_icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icon-512.png",
+      "src": "/icon/rnz_icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    },
+    {
+      "src": "/icon/rnz_favicon_64x64.png",
+      "sizes": "64x64",
+      "type": "image/png",
+      "purpose": "any"
     }
   ]
 }

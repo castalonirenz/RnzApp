@@ -1,0 +1,11 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <title>RNZ Favicon</title>
+
+  <!-- Hexagon -->
+  <polygon points="32,4 56,17 56,47 32,60 8,47 8,17" fill="#1D9E75"/>
+  <polygon points="32,10 51,21 51,43 32,54 13,43 13,21" fill="none" stroke="#5DCAA5" stroke-width="1.5"/>
+
+  <!-- RNZ lettermark -->
+  <text x="8" y="46" font-family="Georgia, serif" font-size="34" font-weight="700" fill="white">RN</text>
+  <text x="42" y="46" font-family="Georgia, serif" font-size="34" font-weight="700" fill="#9FE1CB">Z</text>
+</svg>

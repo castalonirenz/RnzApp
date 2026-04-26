@@ -60,7 +60,7 @@ export default function RegisterPage() {
     <div className={styles.container}>
       <Card className={styles.card}>
         <h1>Create an Account</h1>
-        <p className={styles.subtitle}>Join Personal Tracker to manage lending and expenses</p>
+        <p className={styles.subtitle}>Join RNZ to manage lending and expenses</p>
 
         {(error || formError) && (
           <Alert type="error" onClose={() => setFormError('')}>
