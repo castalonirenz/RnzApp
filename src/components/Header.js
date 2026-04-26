@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
@@ -32,8 +33,16 @@ export default function Header() {
     <header className={styles.header}>
       <div className={styles.container}>
         <Link href="/" className={styles.logo}>
-          <span className={styles.logoIcon}>$</span>
-          <span className={styles.logoText}>Personal Tracker</span>
+          <span className={styles.logoIcon}>
+            <Image
+              src="/icon/rnz_favicon_64x64.png"
+              alt="RNZ logo"
+              width={30}
+              height={30}
+              priority
+            />
+          </span>
+          <span className={styles.logoText}>RNZ</span>
         </Link>
 
         <button

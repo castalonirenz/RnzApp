@@ -1,4 +1,4 @@
-# My Borrower - Loan Management Application
+# RNZ - Personal Tracker Application
 
 A modern, mobile-responsive web application for managing personal loans, calculating interest, and monitoring repayment progress. The backend is implemented with Node.js and Express for REST API support.
 

@@ -32,14 +32,17 @@ export default function RootLayout({ children }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="description" content="Personal Tracker - Manage lending, expenses, and shared costs" />
+        <meta name="description" content="RNZ - Manage lending, expenses, and shared costs" />
         <meta name="theme-color" content="#1e293b" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="PersonalTracker" />
+        <meta name="apple-mobile-web-app-title" content="RNZ" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/icon/rnz_favicon_32x32.png" />
+        <link rel="icon" type="image/png" sizes="64x64" href="/icon/rnz_favicon_64x64.png" />
+        <link rel="icon" type="image/svg+xml" href="/icon/rnz_favicon.svg" />
         <link rel="manifest" href="/manifest.webmanifest" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-        <title>Personal Tracker</title>
+        <link rel="apple-touch-icon" sizes="180x180" href="/icon/rnz_favicon_180x180.png" />
+        <title>RNZ</title>
       </head>
       <body>
         <Header />

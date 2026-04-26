@@ -8,7 +8,7 @@ import styles from './LoginWalkthroughModal.module.css';
 const buildSessionKey = (token) => {
   if (!token) return '';
   const tail = token.slice(-16);
-  return `pt_walkthrough_seen_${tail}`;
+  return `rnz_walkthrough_seen_${tail}`;
 };
 
 const WALKTHROUGH_ITEMS = [
@@ -62,7 +62,7 @@ export default function LoginWalkthroughModal() {
     <div className={styles.backdrop} onClick={handleClose}>
       <div className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="walkthrough-title" onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
-          <h2 id="walkthrough-title">Welcome to Personal Tracker</h2>
+          <h2 id="walkthrough-title">Welcome to RNZ</h2>
           <p>This quick guide appears once each login session.</p>
         </div>
 
