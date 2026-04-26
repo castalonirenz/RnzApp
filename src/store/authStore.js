@@ -73,6 +73,36 @@ export const useAuthStore = create((set) => ({
     }
   },
 
+  forgotPassword: async (email) => {
+    set({ isLoading: true, error: null });
+    try {
+      const data = await authService.forgotPassword(email);
+      set({ isLoading: false });
+      return data;
+    } catch (error) {
+      set({
+        error: error.response?.data?.message || 'Failed to request password reset',
+        isLoading: false,
+      });
+      throw error;
+    }
+  },
+
+  resetPassword: async ({ token, password, confirm_password }) => {
+    set({ isLoading: true, error: null });
+    try {
+      const data = await authService.resetPassword({ token, password, confirm_password });
+      set({ isLoading: false });
+      return data;
+    } catch (error) {
+      set({
+        error: error.response?.data?.message || 'Failed to reset password',
+        isLoading: false,
+      });
+      throw error;
+    }
+  },
+
   logout: async () => {
     set({ isLoading: true });
     try {

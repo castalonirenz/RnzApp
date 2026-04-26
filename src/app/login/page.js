@@ -87,6 +87,10 @@ export default function LoginPage() {
           </Button>
         </form>
 
+        <p className={styles.forgotRow}>
+          <Link href="/forgot-password">Forgot password?</Link>
+        </p>
+
         <p className={styles.footer}>
           Don&apos;t have an account?{' '}
           <Link href="/register">Create one now</Link>

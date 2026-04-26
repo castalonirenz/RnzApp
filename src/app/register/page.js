@@ -18,7 +18,7 @@ export default function RegisterPage() {
     name: '',
     email: '',
     password: '',
-    password_confirmation: '',
+    confirm_password: '',
   });
 
   const handleChange = (e) => {
@@ -33,18 +33,18 @@ export default function RegisterPage() {
     e.preventDefault();
     setFormError('');
 
-    if (!formData.name || !formData.email || !formData.password || !formData.password_confirmation) {
+    if (!formData.name || !formData.email || !formData.password || !formData.confirm_password) {
       setFormError('Please fill in all fields');
       return;
     }
 
-    if (formData.password !== formData.password_confirmation) {
+    if (formData.password !== formData.confirm_password) {
       setFormError('Passwords do not match');
       return;
     }
 
-    if (formData.password.length < 6) {
-      setFormError('Password must be at least 6 characters');
+    if (formData.password.length < 8) {
+      setFormError('Password must be at least 8 characters');
       return;
     }
 
@@ -102,8 +102,8 @@ export default function RegisterPage() {
           <Input
             label="Confirm Password"
             type="password"
-            name="password_confirmation"
-            value={formData.password_confirmation}
+            name="confirm_password"
+            value={formData.confirm_password}
             onChange={handleChange}
             placeholder="••••••••"
             required
