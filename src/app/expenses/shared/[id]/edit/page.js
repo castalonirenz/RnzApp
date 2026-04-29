@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useExpenseSharing } from '@/hooks/useExpenseSharing';
+import { useToast } from '@/hooks/useToast';
 import { useAuth } from '@/hooks/useAuth';
 import SharedExpenseForm from '@/components/SharedExpenseForm';
 import Alert from '@/components/Alert';
@@ -12,8 +13,9 @@ export default function EditSharedExpensePage() {
   const router = useRouter();
   const params = useParams();
   const id = params.id;
+  const toast = useToast();
   const { user } = useAuth();
-  const { isLoading, error, fetchSharedExpenseById, updateSharedExpense } =
+  const { isLoading, fetchSharedExpenseById, updateSharedExpense } =
     useExpenseSharing();
   const [expense, setExpense] = useState(null);
   const [loadError, setLoadError] = useState(null);
@@ -41,9 +43,10 @@ export default function EditSharedExpensePage() {
   const handleSubmit = async (formData) => {
     try {
       await updateSharedExpense(id, formData);
+      toast.success('Shared expense updated successfully.');
       router.push('/expenses/shared');
     } catch (err) {
-      console.error('Failed to update shared expense:', err);
+      toast.error(err?.response?.data?.message || 'Failed to update shared expense');
     }
   };
 
@@ -90,13 +93,10 @@ export default function EditSharedExpensePage() {
             Update details and adjust equal/custom split amounts.
           </p>
 
-          {error && <Alert type="error" message={error} />}
-
           <SharedExpenseForm
             initialData={expense}
             onSubmit={handleSubmit}
             isLoading={isLoading}
-            error={error}
           />
         </div>
       </main>

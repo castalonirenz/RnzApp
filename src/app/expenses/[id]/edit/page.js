@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useExpenses } from '@/hooks/useExpenses';
+import { useToast } from '@/hooks/useToast';
 import Card from '@/components/Card';
 import Button from '@/components/Button';
 import Input from '@/components/Input';
@@ -14,6 +15,7 @@ import styles from '../../add/page.module.css';
 
 const PERIOD_LABEL = {
   daily: 'Daily',
+  weekly: 'Weekly',
   monthly: 'Monthly',
   yearly: 'Yearly',
 };
@@ -35,6 +37,7 @@ const toDateTimeLocal = (dateValue) => {
 export default function EditExpensePage() {
   const params = useParams();
   const router = useRouter();
+  const toast = useToast();
   const searchParams = useSearchParams();
   const { token, isAuthChecked } = useAuth();
   const {
@@ -43,7 +46,6 @@ export default function EditExpensePage() {
     budgetApiAvailable,
     period,
     isLoading,
-    error,
     fetchExpenses,
     fetchBudgets,
     fetchSummary,
@@ -56,7 +58,6 @@ export default function EditExpensePage() {
     fromPath && fromPath.startsWith('/expenses') ? fromPath : '/expenses/list';
   const [isBootstrapping, setIsBootstrapping] = useState(true);
   const [formDraft, setFormDraft] = useState({ expenseId: '', values: {} });
-  const [formError, setFormError] = useState('');
 
   useEffect(() => {
     if (!isAuthChecked) return;
@@ -125,7 +126,6 @@ export default function EditExpensePage() {
 
   const handleAmountDetected = (amountText) => {
     updateFormField('amount', amountText);
-    setFormError('');
   };
 
   const selectedBudget = useMemo(
@@ -159,21 +159,20 @@ export default function EditExpensePage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setFormError('');
 
     if (!form.title || !form.amount || !form.expense_date) {
-      setFormError('Title, amount, and date/time are required.');
+      toast.error('Title, amount, and date/time are required.');
       return;
     }
 
     const amount = Number(form.amount);
     if (!Number.isFinite(amount) || amount <= 0) {
-      setFormError('Amount must be a valid number greater than 0.');
+      toast.error('Amount must be a valid number greater than 0.');
       return;
     }
 
     if (!expenseId) {
-      setFormError('Expense ID is missing.');
+      toast.error('Expense ID is missing.');
       return;
     }
 
@@ -193,9 +192,10 @@ export default function EditExpensePage() {
         fetchBudgets(),
       ]);
 
+      toast.success('Expense updated successfully.');
       router.push(returnPath);
-    } catch {
-      // handled by store
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to update expense.');
     }
   };
 
@@ -224,8 +224,6 @@ export default function EditExpensePage() {
         <h1>Edit Expense</h1>
         <p>Update expense details and budget assignment.</p>
       </div>
-
-      {(error || formError) && <Alert type="error">{formError || error}</Alert>}
 
       {!budgetApiAvailable && (
         <Alert type="warning">

@@ -1,0 +1,52 @@
+.form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.42rem;
+}
+
+.fieldLabel {
+  font-size: 0.82rem;
+  color: #30465d;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.selectInput {
+  width: 100%;
+  height: 42px;
+  border: 1px solid #c7d7e5;
+  border-radius: 12px;
+  padding: 0 0.8rem;
+  font-size: 0.92rem;
+  color: #13283e;
+  background-color: #fff;
+}
+
+.selectInput:focus {
+  outline: none;
+  border-color: #0f766e;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.14);
+}
+
+.checkboxRow {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.checkboxRow label {
+  margin: 0;
+  color: #1f3448;
+  font-weight: 600;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}

@@ -13,6 +13,7 @@ import styles from '../../page.module.css';
 
 const PERIOD_LABEL = {
   daily: 'Daily',
+  weekly: 'Weekly',
   monthly: 'Monthly',
   yearly: 'Yearly',
 };

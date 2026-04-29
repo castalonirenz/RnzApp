@@ -5,17 +5,18 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { useLoans } from '@/hooks/useLoans';
+import { useToast } from '@/hooks/useToast';
 import Button from '@/components/Button';
 import LoanCard from '@/components/LoanCard';
-import Alert from '@/components/Alert';
 import styles from './page.module.css';
 
 const LOANS_PER_PAGE = 6;
 
 export default function LoansPage() {
   const router = useRouter();
+  const toast = useToast();
   const { token, isAuthChecked } = useAuth();
-  const { loans, isLoading, error, fetchLoans, setCurrentLoan, deleteLoan } = useLoans();
+  const { loans, isLoading, fetchLoans, setCurrentLoan, deleteLoan } = useLoans();
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -59,16 +60,16 @@ export default function LoansPage() {
 
   const handleDelete = async (id, status) => {
     if (status !== 'pending' && status !== 'completed') {
-      alert('Only pending or completed loans can be deleted.');
+      toast.warning('Only pending or completed loans can be deleted.');
       return;
     }
 
     if (confirm('Are you sure you want to delete this loan? This action cannot be undone.')) {
       try {
         await deleteLoan(id);
-        alert('Loan deleted successfully');
+        toast.success('Loan deleted successfully.');
       } catch (err) {
-        alert(err.response?.data?.message || 'Failed to delete loan');
+        toast.error(err.response?.data?.message || 'Failed to delete loan');
       }
     }
   };
@@ -110,12 +111,6 @@ export default function LoansPage() {
           </Link>
         </div>
       </div>
-
-      {error && (
-        <Alert type="error" onClose={() => {}}>
-          {error}
-        </Alert>
-      )}
 
       {loans && loans.length > 0 ? (
         filteredLoans.length > 0 ? (

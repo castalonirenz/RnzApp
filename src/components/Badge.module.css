@@ -22,6 +22,18 @@
   border-color: #bdd5f0;
 }
 
+.partiallyPaid {
+  background-color: #e6f8ff;
+  color: #1d5f86;
+  border-color: #b8dfef;
+}
+
+.overdue {
+  background-color: #ffe8e5;
+  color: #923024;
+  border-color: #f0c1bb;
+}
+
 .completed {
   background-color: #e6f8ee;
   color: #15603f;

@@ -78,6 +78,15 @@ export default function Header() {
               </li>
               <li>
                 <Link
+                  href="/payables"
+                  className={`${styles.navLink} ${isActiveRoute('/payables') ? styles.navLinkActive : ''}`}
+                  onClick={() => setIsOpen(false)}
+                >
+                  Payables
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/expenses"
                   className={`${styles.navLink} ${isActiveRoute('/expenses') ? styles.navLinkActive : ''}`}
                   onClick={() => setIsOpen(false)}

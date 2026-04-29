@@ -3,8 +3,29 @@ import apiClient from '@/utils/api';
 const unwrap = (payload) => payload?.data ?? payload?.result ?? payload;
 
 const toNumber = (value, fallback = 0) => {
+  if (typeof value === 'string') {
+    const normalized = value.replace(/,/g, '').trim();
+    const number = Number(normalized);
+    return Number.isFinite(number) ? number : fallback;
+  }
+
   const number = Number(value);
   return Number.isFinite(number) ? number : fallback;
+};
+
+const normalizePeriodType = (value) => {
+  if (value == null) return undefined;
+  const text = String(value).trim().toLowerCase();
+
+  if (!text) return undefined;
+  if (text === 'daily' || text === 'day') return 'daily';
+  if (text === 'weekly' || text === 'week') return 'weekly';
+  if (text === 'monthly' || text === 'month') return 'monthly';
+  if (text === 'yearly' || text === 'year' || text === 'annual' || text === 'annually') {
+    return 'yearly';
+  }
+
+  return undefined;
 };
 
 const extractList = (payload, keys = []) => {
@@ -37,7 +58,7 @@ const normalizeBudget = (budget) => ({
   id: budget?.id ?? budget?._id,
   name: budget?.name ?? 'Untitled Budget',
   amount_limit: toNumber(budget?.amount_limit ?? budget?.limit, 0),
-  period_type: budget?.period_type ?? budget?.period ?? 'monthly',
+  period_type: normalizePeriodType(budget?.period_type ?? budget?.period) ?? 'monthly',
   start_date: budget?.start_date ?? budget?.startDate ?? null,
   end_date: budget?.end_date ?? budget?.endDate ?? null,
   total_spent: budget?.total_spent == null ? null : toNumber(budget?.total_spent, 0),
@@ -101,9 +122,9 @@ const mapExpensePatchToApiPayload = (expense = {}) => {
 };
 
 const mapBudgetToApiPayload = (budget = {}) => ({
-  name: budget.name,
+  name: typeof budget.name === 'string' ? budget.name.trim() : budget.name,
   amount_limit: toNumber(budget.amount_limit, 0),
-  period_type: budget.period_type || 'monthly',
+  period_type: normalizePeriodType(budget.period_type) ?? 'monthly',
 });
 
 const mapBudgetPatchToApiPayload = (budget = {}) => {
@@ -116,12 +137,22 @@ const mapBudgetPatchToApiPayload = (budget = {}) => {
     }
   }
 
-  if ('name' in payload && payload.name == null) {
-    delete payload.name;
+  if ('name' in payload) {
+    if (typeof payload.name === 'string') {
+      payload.name = payload.name.trim();
+    }
+    if (payload.name == null || payload.name === '') {
+      delete payload.name;
+    }
   }
 
-  if ('period_type' in payload && !payload.period_type) {
-    delete payload.period_type;
+  if ('period_type' in payload) {
+    const normalizedPeriod = normalizePeriodType(payload.period_type);
+    if (!normalizedPeriod) {
+      delete payload.period_type;
+    } else {
+      payload.period_type = normalizedPeriod;
+    }
   }
 
   Object.keys(payload).forEach((key) => {
@@ -195,7 +226,20 @@ export const expenseService = {
   },
 
   updateBudget: async (id, budget) => {
-    const response = await apiClient.patch(`/budgets/${id}`, mapBudgetPatchToApiPayload(budget));
+    const payloadForApi = mapBudgetPatchToApiPayload(budget);
+    let response;
+
+    try {
+      response = await apiClient.patch(`/budgets/${id}`, payloadForApi);
+    } catch (error) {
+      const status = error?.response?.status;
+      if (status === 404 || status === 405 || status === 501) {
+        response = await apiClient.put(`/budgets/${id}`, payloadForApi);
+      } else {
+        throw error;
+      }
+    }
+
     const payload = unwrap(response.data);
     const updated = payload?.budget ?? payload?.item ?? payload;
 

@@ -1,0 +1,122 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 17, 30, 0.5);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 1300;
+}
+
+.modal {
+  width: min(520px, 100%);
+  max-height: 92vh;
+  overflow-y: auto;
+  border-radius: 18px;
+  border: 1px solid #c7d7e5;
+  padding: 1rem;
+  background: linear-gradient(170deg, #ffffff, #f4f8fc);
+  box-shadow: 0 20px 36px rgba(17, 32, 50, 0.22);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.8rem;
+  margin-bottom: 0.75rem;
+}
+
+.header h3 {
+  margin: 0;
+}
+
+.header p {
+  margin: 0.2rem 0 0;
+  color: #5c7288;
+  font-size: 0.84rem;
+}
+
+.closeButton {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #c7d7e5;
+  border-radius: 999px;
+  background: #fff;
+  color: #30465d;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.closeButton:hover:not(:disabled) {
+  background: #eef6fd;
+}
+
+.closeButton:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.balanceBox {
+  border: 1px solid #cfe0eb;
+  border-radius: 12px;
+  padding: 0.65rem 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.8rem;
+  background: #eef7fb;
+}
+
+.balanceBox span {
+  font-size: 0.82rem;
+  color: #4e6479;
+}
+
+.balanceBox strong {
+  color: #0f5f57;
+}
+
+.form {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.42rem;
+}
+
+.fieldLabel {
+  font-size: 0.82rem;
+  color: #30465d;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.selectInput,
+.textarea {
+  width: 100%;
+  border: 1px solid #c7d7e5;
+  border-radius: 12px;
+  padding: 0.62rem 0.75rem;
+  font-size: 0.92rem;
+  color: #13283e;
+  background-color: #fff;
+}
+
+.selectInput:focus,
+.textarea:focus {
+  outline: none;
+  border-color: #0f766e;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.14);
+}
+
+.actions {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}

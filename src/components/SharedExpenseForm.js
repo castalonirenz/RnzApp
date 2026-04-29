@@ -2,7 +2,7 @@ import { useState } from 'react';
 import styles from './SharedExpenseForm.module.css';
 import Button from './Button';
 import Input from './Input';
-import Alert from './Alert';
+import { useToast } from '@/hooks/useToast';
 
 const parseParticipants = (raw = '') =>
   String(raw)
@@ -65,8 +65,8 @@ export default function SharedExpenseForm({
   initialData = null,
   onSubmit,
   isLoading = false,
-  error = null,
 }) {
+  const toast = useToast();
   const [formData, setFormData] = useState({
     title: initialData?.title || '',
     amount: initialData?.amount || '',
@@ -76,7 +76,6 @@ export default function SharedExpenseForm({
 
   const [splitMode, setSplitMode] = useState(initialSplitMode(initialData));
   const [customAmounts, setCustomAmounts] = useState(initialCustomAmounts(initialData));
-  const [validationError, setValidationError] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -95,8 +94,6 @@ export default function SharedExpenseForm({
         return next;
       });
     }
-
-    setValidationError(null);
   };
 
   const handleCustomAmountChange = (participant, rawAmount) => {
@@ -104,24 +101,20 @@ export default function SharedExpenseForm({
       ...prev,
       [participant]: rawAmount === '' ? 0 : toNumber(rawAmount, 0),
     }));
-    setValidationError(null);
   };
 
   const validateForm = () => {
     if (!formData.title.trim()) {
-      setValidationError('Expense title is required');
-      return false;
+      return 'Expense title is required.';
     }
 
     if (!formData.amount || toNumber(formData.amount, 0) <= 0) {
-      setValidationError('Amount must be greater than 0');
-      return false;
+      return 'Amount must be greater than 0.';
     }
 
     const participants = parseParticipants(formData.participants);
     if (participants.length === 0) {
-      setValidationError('At least one participant is required');
-      return false;
+      return 'At least one participant is required.';
     }
 
     if (splitMode === 'custom') {
@@ -129,8 +122,7 @@ export default function SharedExpenseForm({
       for (const participant of participants) {
         const amount = toNumber(customAmounts[participant], 0);
         if (amount < 0) {
-          setValidationError(`${participant} amount cannot be negative`);
-          return false;
+          return `${participant} amount cannot be negative.`;
         }
         customTotal += amount;
       }
@@ -138,20 +130,23 @@ export default function SharedExpenseForm({
       const totalAmount = toNumber(formData.amount, 0);
       const tolerance = 0.01;
       if (Math.abs(customTotal - totalAmount) > tolerance) {
-        setValidationError(
+        return (
           `Custom amounts total (PHP ${customTotal.toFixed(2)}) must equal total amount (PHP ${totalAmount.toFixed(2)})`
         );
-        return false;
       }
     }
 
-    return true;
+    return null;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (!validateForm()) return;
+    const validationMessage = validateForm();
+    if (validationMessage) {
+      toast.error(validationMessage);
+      return;
+    }
 
     const participants = parseParticipants(formData.participants);
     const totalAmount = toNumber(formData.amount, 0);
@@ -337,12 +332,9 @@ export default function SharedExpenseForm({
         </div>
       )}
 
-      {(error || validationError) && <Alert type="error">{error || validationError}</Alert>}
-
       <Button type="submit" disabled={isLoading} variant="primary" className={styles.submitBtn}>
         {isLoading ? 'Processing...' : initialData ? 'Update Expense' : 'Create Expense'}
       </Button>
     </form>
   );
 }
-

@@ -1,29 +1,26 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useExpenseSharing } from '@/hooks/useExpenseSharing';
+import { useToast } from '@/hooks/useToast';
 import { useAuth } from '@/hooks/useAuth';
 import SharedExpenseTable from '@/components/SharedExpenseTable';
 import Button from '@/components/Button';
-import Alert from '@/components/Alert';
 import Link from 'next/link';
 import styles from './page.module.css';
 
 export default function SharedExpensesPage() {
   const router = useRouter();
+  const toast = useToast();
   const { user } = useAuth();
   const {
     sharedExpenses,
     isLoading,
-    error,
     fetchSharedExpenses,
     deleteSharedExpense,
     exportExpenses,
   } = useExpenseSharing();
-
-  const [deleteError, setDeleteError] = useState(null);
-  const [deleteSuccess, setDeleteSuccess] = useState(null);
 
   useEffect(() => {
     if (!user) {
@@ -40,21 +37,19 @@ export default function SharedExpensesPage() {
 
   const handleDelete = async (id) => {
     try {
-      setDeleteError(null);
-      setDeleteSuccess(null);
       await deleteSharedExpense(id);
-      setDeleteSuccess('Expense deleted successfully');
-      setTimeout(() => setDeleteSuccess(null), 3000);
+      toast.success('Expense deleted successfully.');
     } catch (err) {
-      setDeleteError(err?.response?.data?.message || 'Failed to delete expense');
+      toast.error(err?.response?.data?.message || 'Failed to delete expense');
     }
   };
 
   const handleExport = async (format) => {
     try {
       await exportExpenses(format);
+      toast.success(`Shared expenses exported as ${String(format).toUpperCase()}.`);
     } catch (err) {
-      setDeleteError(err?.response?.data?.message || `Failed to export as ${format}`);
+      toast.error(err?.response?.data?.message || `Failed to export as ${format}`);
     }
   };
 
@@ -71,10 +66,6 @@ export default function SharedExpensesPage() {
             <Button variant="primary">+ Add Shared Expense</Button>
           </Link>
         </div>
-
-        {error && <Alert type="error" message={error} />}
-        {deleteError && <Alert type="error" message={deleteError} />}
-        {deleteSuccess && <Alert type="success" message={deleteSuccess} />}
 
         <SharedExpenseTable
           expenses={sharedExpenses}

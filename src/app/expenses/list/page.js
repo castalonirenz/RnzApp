@@ -5,9 +5,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useExpenses } from '@/hooks/useExpenses';
+import { useToast } from '@/hooks/useToast';
 import Card from '@/components/Card';
 import Button from '@/components/Button';
-import Alert from '@/components/Alert';
 import { formatCurrency, formatDateTime } from '@/utils/calculations';
 import styles from '../page.module.css';
 
@@ -15,12 +15,12 @@ const EXPENSES_PER_PAGE = 6;
 
 export default function ExpenseListPage() {
   const router = useRouter();
+  const toast = useToast();
   const { token, isAuthChecked } = useAuth();
   const {
     expenses,
     budgets,
     isLoading,
-    error,
     fetchExpenses,
     fetchBudgets,
     deleteExpense,
@@ -100,8 +100,9 @@ export default function ExpenseListPage() {
     try {
       await deleteExpense(id);
       await fetchBudgets();
-    } catch {
-      // handled by store
+      toast.success('Expense deleted successfully.');
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to delete expense.');
     }
   };
 
@@ -119,8 +120,6 @@ export default function ExpenseListPage() {
         <h1>Expense List</h1>
         <p>Review, search, and delete saved expenses.</p>
       </div>
-
-      {error && <Alert type="error">{error}</Alert>}
 
       <div className={styles.quickActions}>
         <Link href="/expenses/add">
