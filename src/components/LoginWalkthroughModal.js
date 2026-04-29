@@ -29,6 +29,11 @@ const WALKTHROUGH_ITEMS = [
     detail: 'Split costs with participants and export reports when needed.',
   }
   ,
+  {
+    title: 'Payables',
+    detail: 'Manage your payables and track payment statuses.',
+  }
+  ,
   // {
   //   title: 'Receipt Amount Assist',
   //   detail: 'Upload a receipt image and auto-fill expense amount using local Ollama.',
