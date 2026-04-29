@@ -5,6 +5,7 @@ import { Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useExpenses } from '@/hooks/useExpenses';
+import { useToast } from '@/hooks/useToast';
 import Card from '@/components/Card';
 import Button from '@/components/Button';
 import Input from '@/components/Input';
@@ -15,6 +16,7 @@ import styles from './page.module.css';
 
 const PERIOD_LABEL = {
   daily: 'Daily',
+  weekly: 'Weekly',
   monthly: 'Monthly',
   yearly: 'Yearly',
 };
@@ -31,6 +33,7 @@ const toDateTimeLocal = (date = new Date()) => {
 
 function AddExpensePageContent() {
   const router = useRouter();
+  const toast = useToast();
   const searchParams = useSearchParams();
   const preselectedBudgetId = searchParams.get('budget_id') || searchParams.get('budgetId') || '';
   const { token, isAuthChecked } = useAuth();
@@ -39,7 +42,6 @@ function AddExpensePageContent() {
     budgetApiAvailable,
     period,
     isLoading,
-    error,
     fetchBudgets,
     fetchExpenses,
     fetchSummary,
@@ -55,12 +57,9 @@ function AddExpensePageContent() {
     budget_id: preselectedBudgetId,
     expense_date: toDateTimeLocal(),
   });
-  const [formError, setFormError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
 
   const handleAmountDetected = (amountText) => {
     setForm((prev) => ({ ...prev, amount: amountText }));
-    setFormError('');
   };
 
   const selectedBudget = useMemo(
@@ -121,23 +120,21 @@ function AddExpensePageContent() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setFormError('');
-    setSuccessMessage('');
 
     if (!form.title || !form.amount || !form.expense_date) {
-      setFormError('Title, amount, and date/time are required.');
+      toast.error('Title, amount, and date/time are required.');
       return;
     }
 
     const amount = Number(form.amount);
     if (!Number.isFinite(amount) || amount <= 0) {
-      setFormError('Amount must be a valid number greater than 0.');
+      toast.error('Amount must be a valid number greater than 0.');
       return;
     }
 
     const parsedExpenseDate = new Date(form.expense_date);
     if (Number.isNaN(parsedExpenseDate.getTime())) {
-      setFormError('Please provide a valid date and time.');
+      toast.error('Please provide a valid date and time.');
       return;
     }
 
@@ -165,9 +162,9 @@ function AddExpensePageContent() {
         budget_id: preselectedBudgetId || '',
         expense_date: toDateTimeLocal(),
       });
-      setSuccessMessage('Expense saved successfully.');
-    } catch {
-      // handled by store
+      toast.success('Expense saved successfully.');
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to save expense.');
     }
   };
 
@@ -185,9 +182,6 @@ function AddExpensePageContent() {
         <h1>Add Expense</h1>
         <p>Record a new expense and optionally assign it to a budget.</p>
       </div>
-
-      {(error || formError) && <Alert type="error">{formError || error}</Alert>}
-      {successMessage && <Alert type="success">{successMessage}</Alert>}
 
       {!budgetApiAvailable && (
         <Alert type="warning">

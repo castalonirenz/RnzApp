@@ -147,6 +147,49 @@
   margin-bottom: 1rem;
 }
 
+.payablesWidget {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.payablesHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.payablesHeader h3 {
+  margin: 0;
+}
+
+.payablesGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.payablesGrid div {
+  border: 1px solid #cfdeea;
+  border-radius: 12px;
+  padding: 0.62rem;
+  background: #f6fbff;
+  display: grid;
+  gap: 0.22rem;
+}
+
+.payablesGrid span {
+  font-size: 0.75rem;
+  color: #587084;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.payablesGrid strong {
+  color: #153a50;
+}
+
 @media (max-width: 1024px) {
   .statsGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -183,6 +226,10 @@
   .statsGrid {
     gap: 0.7rem;
   }
+
+  .payablesGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 640px) {
@@ -192,5 +239,9 @@
 
   .statValue {
     font-size: 1.38rem;
+  }
+
+  .payablesGrid {
+    grid-template-columns: 1fr;
   }
 }

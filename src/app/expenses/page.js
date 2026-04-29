@@ -15,6 +15,7 @@ import styles from './page.module.css';
 
 const PERIOD_LABEL = {
   daily: 'Daily',
+  weekly: 'Weekly',
   monthly: 'Monthly',
   yearly: 'Yearly',
 };
@@ -29,6 +30,13 @@ const getPeriodKey = (dateValue, period) => {
   if (Number.isNaN(date.getTime())) return '';
 
   if (period === 'yearly') return String(date.getFullYear());
+  if (period === 'weekly') {
+    const weekStart = new Date(date);
+    const dayOfWeek = weekStart.getDay();
+    const daysFromMonday = (dayOfWeek + 6) % 7;
+    weekStart.setDate(weekStart.getDate() - daysFromMonday);
+    return weekStart.toISOString().slice(0, 10);
+  }
   const month = String(date.getMonth() + 1).padStart(2, '0');
   if (period === 'monthly') return `${date.getFullYear()}-${month}`;
   const day = String(date.getDate()).padStart(2, '0');
@@ -60,6 +68,17 @@ const getPeriodWindow = (periodType, now = new Date()) => {
     start.setDate(1);
     start.setHours(0, 0, 0, 0);
     end.setMonth(start.getMonth() + 1, 1);
+    end.setHours(0, 0, 0, 0);
+    return { start, end };
+  }
+
+  if (periodType === 'weekly') {
+    const dayOfWeek = start.getDay();
+    const daysFromMonday = (dayOfWeek + 6) % 7;
+    start.setDate(start.getDate() - daysFromMonday);
+    start.setHours(0, 0, 0, 0);
+    end.setTime(start.getTime());
+    end.setDate(start.getDate() + 7);
     end.setHours(0, 0, 0, 0);
     return { start, end };
   }

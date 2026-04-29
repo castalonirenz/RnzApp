@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { useLoans } from '@/hooks/useLoans';
+import { useToast } from '@/hooks/useToast';
 import Button from '@/components/Button';
 import Input from '@/components/Input';
 import Card from '@/components/Card';
@@ -14,9 +15,9 @@ import styles from './page.module.css';
 
 export default function NewLoanPage() {
   const router = useRouter();
+  const toast = useToast();
   const { token, isAuthChecked } = useAuth();
-  const { createLoan, isLoading, error } = useLoans();
-  const [formError, setFormError] = useState('');
+  const { createLoan, isLoading } = useLoans();
   const [formData, setFormData] = useState({
     borrower_name: '',
     borrower_contact: '',
@@ -67,10 +68,9 @@ export default function NewLoanPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setFormError('');
 
     if (!formData.borrower_name || !formData.principal || !formData.interest_rate || !formData.duration_months) {
-      setFormError('Please fill in all required fields');
+      toast.error('Please fill in all required fields.');
       return;
     }
 
@@ -79,12 +79,12 @@ export default function NewLoanPage() {
     const months = parseInt(formData.duration_months, 10);
 
     if (principal <= 0 || rate < 0 || months <= 0) {
-      setFormError('Please enter valid amounts');
+      toast.error('Please enter valid amounts.');
       return;
     }
 
     if (!formData.accepted_terms) {
-      setFormError('You must accept the Terms, Conditions, and Data Privacy Notice before creating a loan.');
+      toast.error('You must accept the Terms, Conditions, and Data Privacy Notice before creating a loan.');
       return;
     }
 
@@ -100,9 +100,10 @@ export default function NewLoanPage() {
         duration_months: months,
         total_receivable: total,
       });
+      toast.success('Loan created successfully.');
       router.push('/loans');
     } catch (err) {
-      setFormError(err.response?.data?.message || 'Failed to create loan');
+      toast.error(err.response?.data?.message || 'Failed to create loan');
     }
   };
 
@@ -113,12 +114,6 @@ export default function NewLoanPage() {
       <Card className={styles.formCard}>
         <h1>Create New Loan</h1>
         <p className={styles.subtitle}>Enter loan details below</p>
-
-        {(error || formError) && (
-          <Alert type="error" onClose={() => setFormError('')}>
-            {formError || error}
-          </Alert>
-        )}
 
         <form 
           onSubmit={handleSubmit}

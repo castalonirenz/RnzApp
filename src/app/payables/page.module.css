@@ -1,0 +1,92 @@
+.container {
+  max-width: 1160px;
+  margin: 0 auto;
+  display: grid;
+  gap: 1rem;
+}
+
+.header {
+  border: 1px solid #d3e0ea;
+  border-radius: 20px;
+  padding: 1rem 1.1rem;
+  background: linear-gradient(164deg, #ffffff, #f4f8fd);
+  box-shadow: 0 12px 28px rgba(17, 32, 50, 0.1);
+}
+
+.header p {
+  margin: 0.2rem 0 0;
+  color: #5d7288;
+}
+
+.toolbar {
+  display: grid;
+  gap: 0.8rem;
+  margin-bottom: 0.8rem;
+}
+
+.filters {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.actions a {
+  text-decoration: none;
+}
+
+.selectInput,
+.textInput {
+  height: 42px;
+  border: 1px solid #c7d7e5;
+  border-radius: 12px;
+  padding: 0 0.75rem;
+  background: #fff;
+  color: #13283e;
+}
+
+.textInput {
+  min-width: 250px;
+}
+
+.selectInput:focus,
+.textInput:focus {
+  outline: none;
+  border-color: #0f766e;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.14);
+}
+
+.resultMeta {
+  margin-bottom: 0.65rem;
+  color: #5d7288;
+  font-size: 0.86rem;
+}
+
+@media (max-width: 900px) {
+  .actions {
+    justify-content: flex-start;
+  }
+
+  .textInput {
+    min-width: 200px;
+    flex: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .filters {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .selectInput,
+  .textInput {
+    width: 100%;
+  }
+}

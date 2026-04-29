@@ -19,6 +19,11 @@
   color: #5d7288;
 }
 
+.actionRow {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .form {
   display: grid;
   gap: 0.75rem;
@@ -130,7 +135,71 @@
   text-decoration: none;
 }
 
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 17, 30, 0.5);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 1000;
+}
+
+.modal {
+  width: min(560px, 100%);
+  max-height: 92vh;
+  overflow-y: auto;
+  border-radius: 18px;
+  border: 1px solid #c7d7e5;
+  padding: 1rem;
+  background: linear-gradient(170deg, #ffffff, #f4f8fc);
+  box-shadow: 0 20px 36px rgba(17, 32, 50, 0.22);
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  margin-bottom: 0.85rem;
+}
+
+.modalHeader h2 {
+  margin: 0;
+}
+
+.closeButton {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #c7d7e5;
+  border-radius: 999px;
+  background: #fff;
+  color: #30465d;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.closeButton:hover:not(:disabled) {
+  background: #eef6fd;
+}
+
+.closeButton:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
 @media (max-width: 768px) {
+  .actionRow {
+    justify-content: stretch;
+  }
+
+  .actionRow button {
+    width: 100%;
+  }
+
   .budgetCardHeader {
     flex-direction: column;
     align-items: flex-start;
@@ -143,5 +212,10 @@
 
   .formActions {
     width: 100%;
+  }
+
+  .modal {
+    padding: 0.9rem;
+    border-radius: 14px;
   }
 }

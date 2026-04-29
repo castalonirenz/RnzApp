@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { useLoans } from '@/hooks/useLoans';
+import { useToast } from '@/hooks/useToast';
 import Button from '@/components/Button';
 import Card from '@/components/Card';
 import Input from '@/components/Input';
@@ -30,14 +31,13 @@ const toDateTimeLocalValue = (value) => {
 export default function LoanDetailPage() {
   const router = useRouter();
   const params = useParams();
+  const toast = useToast();
   const { token, isAuthChecked } = useAuth();
   const { currentLoan, isLoading, fetchLoanById, addPaymentWithDate, updateLoanStatus, fetchLoanHistory } = useLoans();
   const [paymentAmount, setPaymentAmount] = useState('');
   const [paymentDateTime, setPaymentDateTime] = useState(toDateTimeLocalValue());
   const [history, setHistory] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
   const [releaseDate, setReleaseDate] = useState('');
@@ -115,11 +115,9 @@ export default function LoanDetailPage() {
 
   const handleAddPayment = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
 
     if (!paymentAmount || Number.isNaN(Number(paymentAmount)) || parseFloat(paymentAmount) <= 0) {
-      setError('Please enter a valid payment amount');
+      toast.error('Please enter a valid payment amount.');
       return;
     }
 
@@ -130,36 +128,34 @@ export default function LoanDetailPage() {
     );
 
     if (amount > remaining) {
-      setError(`Payment amount cannot exceed remaining balance of ${formatCurrency(remaining)}`);
+      toast.error(`Payment amount cannot exceed remaining balance of ${formatCurrency(remaining)}.`);
       return;
     }
 
     setIsSubmitting(true);
     try {
       await addPaymentWithDate(currentLoan.id, amount, new Date(paymentDateTime).toISOString());
-      setSuccess('Payment recorded successfully!');
+      toast.success('Payment recorded successfully.');
       setPaymentAmount('');
       setPaymentDateTime(toDateTimeLocalValue());
       await fetchLoanById(params.id);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to record payment');
+      toast.error(err.response?.data?.message || 'Failed to record payment');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleMarkOngoing = async () => {
-    setError('');
-    setSuccess('');
     setIsSubmitting(true);
 
   
     try {
       await updateLoanStatus(currentLoan.id, 'ongoing', releaseDate);
-      setSuccess('Loan update successfully!');
+      toast.success('Loan updated successfully.');
       await fetchLoanById(params.id);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update loan status');
+      toast.error(err.response?.data?.message || 'Failed to update loan status');
     } finally {
       setIsSubmitting(false);
     }
@@ -356,9 +352,6 @@ export default function LoanDetailPage() {
             </table>
           </div>
         </Card>
-
-         {error && <Alert type="error" onClose={() => setError('')}>{error}</Alert>}
-            {success && <Alert type="success" onClose={() => setSuccess('')}>{success}</Alert>}
 
         {(currentLoan.status === 'pending' || currentLoan.status == "ongoing") && remaining > 0 && (
           <Card>

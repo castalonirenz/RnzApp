@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useExpenses } from '@/hooks/useExpenses';
+import { useToast } from '@/hooks/useToast';
 import Card from '@/components/Card';
 import Button from '@/components/Button';
 import Input from '@/components/Input';
@@ -14,11 +15,12 @@ import styles from './page.module.css';
 
 const PERIOD_LABEL = {
   daily: 'Daily',
+  weekly: 'Weekly',
   monthly: 'Monthly',
   yearly: 'Yearly',
 };
 
-const PERIOD_OPTIONS = ['daily', 'monthly', 'yearly'];
+const PERIOD_OPTIONS = ['daily', 'weekly', 'monthly', 'yearly'];
 
 const toNumber = (value, fallback = 0) => {
   const number = Number(value);
@@ -41,6 +43,17 @@ const getPeriodWindow = (periodType, now = new Date()) => {
     start.setDate(1);
     start.setHours(0, 0, 0, 0);
     end.setMonth(start.getMonth() + 1, 1);
+    end.setHours(0, 0, 0, 0);
+    return { start, end };
+  }
+
+  if (periodType === 'weekly') {
+    const dayOfWeek = start.getDay();
+    const daysFromMonday = (dayOfWeek + 6) % 7;
+    start.setDate(start.getDate() - daysFromMonday);
+    start.setHours(0, 0, 0, 0);
+    end.setTime(start.getTime());
+    end.setDate(start.getDate() + 7);
     end.setHours(0, 0, 0, 0);
     return { start, end };
   }
@@ -97,12 +110,12 @@ const downloadBlob = (blob, filename) => {
 export default function BudgetsPage() {
   const router = useRouter();
   const { token, isAuthChecked } = useAuth();
+  const toast = useToast();
   const {
     expenses,
     budgets,
     budgetApiAvailable,
     isLoading,
-    error,
     fetchExpenses,
     fetchBudgets,
     createBudget,
@@ -112,10 +125,9 @@ export default function BudgetsPage() {
   } = useExpenses();
 
   const [isBootstrapping, setIsBootstrapping] = useState(true);
-  const [formError, setFormError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
   const [budgetExportingKey, setBudgetExportingKey] = useState('');
   const [budgetActionKey, setBudgetActionKey] = useState('');
+  const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
   const [editingBudgetId, setEditingBudgetId] = useState('');
   const [budgetForm, setBudgetForm] = useState({
     name: '',
@@ -145,6 +157,17 @@ export default function BudgetsPage() {
       mounted = false;
     };
   }, [isAuthChecked, token, router, fetchBudgets, fetchExpenses]);
+
+  useEffect(() => {
+    if (!isBudgetModalOpen) return undefined;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [isBudgetModalOpen]);
 
   const budgetSnapshots = useMemo(() => {
     const now = new Date();
@@ -188,19 +211,28 @@ export default function BudgetsPage() {
     setEditingBudgetId('');
   };
 
+  const openCreateModal = () => {
+    resetBudgetForm();
+    setIsBudgetModalOpen(true);
+  };
+
+  const closeBudgetModal = () => {
+    if (isLoading) return;
+    setIsBudgetModalOpen(false);
+    resetBudgetForm();
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setFormError('');
-    setSuccessMessage('');
 
     if (!budgetForm.name || !budgetForm.amount_limit || !budgetForm.period_type) {
-      setFormError('Budget name, amount limit, and period are required.');
+      toast.error('Budget name, amount limit, and period are required.');
       return;
     }
 
     const amountLimit = Number(budgetForm.amount_limit);
     if (!Number.isFinite(amountLimit) || amountLimit <= 0) {
-      setFormError('Amount limit must be a valid number greater than 0.');
+      toast.error('Amount limit must be a valid number greater than 0.');
       return;
     }
 
@@ -214,31 +246,30 @@ export default function BudgetsPage() {
       if (editingBudgetId) {
         setBudgetActionKey(`${editingBudgetId}:update`);
         await updateBudget(editingBudgetId, payload);
-        setSuccessMessage('Budget updated successfully.');
+        toast.success('Budget updated successfully.');
       } else {
         setBudgetActionKey('create');
         await createBudget(payload);
-        setSuccessMessage('Budget saved successfully.');
+        toast.success('Budget saved successfully.');
       }
 
       await Promise.allSettled([fetchBudgets(), fetchExpenses()]);
-      resetBudgetForm();
-    } catch {
-      // handled by store
+      closeBudgetModal();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to save budget.');
     } finally {
       setBudgetActionKey('');
     }
   };
 
   const handleStartEdit = (budget) => {
-    setFormError('');
-    setSuccessMessage('');
     setEditingBudgetId(String(budget.id));
     setBudgetForm({
       name: budget.name || '',
       amount_limit: String(toNumber(budget.amount_limit, 0)),
       period_type: budget.period_type || 'monthly',
     });
+    setIsBudgetModalOpen(true);
   };
 
   const handleDeleteBudget = async (budget) => {
@@ -248,19 +279,17 @@ export default function BudgetsPage() {
     );
     if (!confirmDelete) return;
 
-    setFormError('');
-    setSuccessMessage('');
     setBudgetActionKey(`${budgetId}:delete`);
 
     try {
       await deleteBudget(budgetId);
       await Promise.allSettled([fetchBudgets(), fetchExpenses()]);
       if (editingBudgetId === budgetId) {
-        resetBudgetForm();
+        closeBudgetModal();
       }
-      setSuccessMessage('Budget deleted successfully.');
-    } catch {
-      // handled by store
+      toast.success('Budget deleted successfully.');
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to delete budget.');
     } finally {
       setBudgetActionKey('');
     }
@@ -274,8 +303,8 @@ export default function BudgetsPage() {
       const { blob, filename } = await exportBudgetReport(budgetId, format);
       const fallback = `budget-${budgetId}-${new Date().toISOString().slice(0, 10)}.${format}`;
       downloadBlob(blob, filename || fallback);
-    } catch {
-      // handled by store
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to export budget.');
     } finally {
       setBudgetExportingKey('');
     }
@@ -296,18 +325,135 @@ export default function BudgetsPage() {
         <p>Create, edit, or delete budgets while tracking usage.</p>
       </div>
 
-      {(error || formError) && <Alert type="error">{formError || error}</Alert>}
-      {successMessage && <Alert type="success">{successMessage}</Alert>}
-
       {!budgetApiAvailable && (
         <Alert type="warning">
           Budget API is not available yet. Please integrate `/budgets` endpoints first.
         </Alert>
       )}
 
-      <div className="d-flex flex-wrap w-100">
-        <div className="col-12 col-lg-5">
-          <Card>
+      <div className={styles.actionRow}>
+        <Button
+          variant="primary"
+          onClick={openCreateModal}
+          disabled={!budgetApiAvailable || isLoading}
+        >
+          Create Budget
+        </Button>
+      </div>
+
+      <Card>
+        <h2>Budget List</h2>
+        <div className={styles.budgetList}>
+          {budgetSnapshots.length > 0 ? (
+            budgetSnapshots.map((budget) => (
+              <div className={styles.budgetCard} key={budget.id}>
+                <div className={styles.budgetCardHeader}>
+                  <div>
+                    <h4>{budget.name}</h4>
+                    <p>{PERIOD_LABEL[budget.period_type] || budget.period_type}</p>
+                  </div>
+                  <strong>{formatCurrency(budget.remaining)}</strong>
+                </div>
+                <div className={styles.budgetMeta}>
+                  <span>Spent: {formatCurrency(budget.spent)}</span>
+                  <span>Limit: {formatCurrency(budget.amountLimit)}</span>
+                </div>
+                <div className={styles.progressTrack}>
+                  <div
+                    className={styles.progressBar}
+                    style={{
+                      width: `${Math.max(0, budget.progress)}%`,
+                      backgroundColor: budget.remaining < 0 ? '#dc2626' : '#0f766e',
+                    }}
+                  />
+                </div>
+                <div className={styles.cardActions}>
+                  <Link href={`/expenses/budgets/${budget.id}`}>
+                    <Button size="sm" variant="primary">
+                      View Expenses
+                    </Button>
+                  </Link>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => handleStartEdit(budget)}
+                    disabled={
+                      isLoading ||
+                      budgetActionKey === `${budget.id}:delete` ||
+                      budgetExportingKey.startsWith(`${budget.id}:`)
+                    }
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="danger"
+                    onClick={() => handleDeleteBudget(budget)}
+                    disabled={isLoading || budgetActionKey === `${budget.id}:delete`}
+                  >
+                    {budgetActionKey === `${budget.id}:delete` ? 'Deleting...' : 'Delete'}
+                  </Button>
+                </div>
+                <div className={styles.exportButtons}>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => handleBudgetExport(budget.id, 'csv')}
+                    disabled={
+                      budgetExportingKey === `${budget.id}:csv` ||
+                      budgetActionKey === `${budget.id}:delete`
+                    }
+                  >
+                    {budgetExportingKey === `${budget.id}:csv` ? 'Exporting...' : 'CSV'}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="primary"
+                    onClick={() => handleBudgetExport(budget.id, 'pdf')}
+                    disabled={
+                      budgetExportingKey === `${budget.id}:pdf` ||
+                      budgetActionKey === `${budget.id}:delete`
+                    }
+                  >
+                    {budgetExportingKey === `${budget.id}:pdf` ? 'Exporting...' : 'PDF'}
+                  </Button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p>No budgets yet.</p>
+          )}
+        </div>
+      </Card>
+
+      {isBudgetModalOpen && (
+        <div
+          className={styles.modalBackdrop}
+          onClick={closeBudgetModal}
+          role="presentation"
+        >
+          <div
+            className={styles.modal}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="budget-modal-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.modalHeader}>
+              <h2 id="budget-modal-title">
+                {editingBudgetId ? 'Edit Budget' : 'Create Budget'}
+              </h2>
+              <button
+                type="button"
+                className={styles.closeButton}
+                onClick={closeBudgetModal}
+                disabled={isLoading}
+                aria-label="Close budget form"
+              >
+                x
+              </button>
+            </div>
+
             <form className={styles.form} onSubmit={handleSubmit}>
               <Input
                 label="Budget Name"
@@ -354,108 +500,19 @@ export default function BudgetsPage() {
                 >
                   {editingBudgetId ? 'Update Budget' : 'Save Budget'}
                 </Button>
-                {editingBudgetId && (
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    disabled={isLoading}
-                    onClick={resetBudgetForm}
-                  >
-                    Cancel Edit
-                  </Button>
-                )}
+                <Button
+                  type="button"
+                  variant="secondary"
+                  disabled={isLoading}
+                  onClick={closeBudgetModal}
+                >
+                  Cancel
+                </Button>
               </div>
             </form>
-          </Card>
+          </div>
         </div>
-
-        <div className="col-12 col-lg-7">
-          <Card>
-            <h2>Budget List</h2>
-            <div className={styles.budgetList}>
-              {budgetSnapshots.length > 0 ? (
-                budgetSnapshots.map((budget) => (
-                  <div className={styles.budgetCard} key={budget.id}>
-                    <div className={styles.budgetCardHeader}>
-                      <div>
-                        <h4>{budget.name}</h4>
-                        <p>{PERIOD_LABEL[budget.period_type] || budget.period_type}</p>
-                      </div>
-                      <strong>{formatCurrency(budget.remaining)}</strong>
-                    </div>
-                    <div className={styles.budgetMeta}>
-                      <span>Spent: {formatCurrency(budget.spent)}</span>
-                      <span>Limit: {formatCurrency(budget.amountLimit)}</span>
-                    </div>
-                    <div className={styles.progressTrack}>
-                      <div
-                        className={styles.progressBar}
-                        style={{
-                          width: `${Math.max(0, budget.progress)}%`,
-                          backgroundColor: budget.remaining < 0 ? '#dc2626' : '#0f766e',
-                        }}
-                      />
-                    </div>
-                    <div className={styles.cardActions}>
-                      <Link href={`/expenses/budgets/${budget.id}`}>
-                        <Button size="sm" variant="primary">
-                          View Expenses
-                        </Button>
-                      </Link>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => handleStartEdit(budget)}
-                        disabled={
-                          isLoading ||
-                          budgetActionKey === `${budget.id}:delete` ||
-                          budgetExportingKey.startsWith(`${budget.id}:`)
-                        }
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="danger"
-                        onClick={() => handleDeleteBudget(budget)}
-                        disabled={isLoading || budgetActionKey === `${budget.id}:delete`}
-                      >
-                        {budgetActionKey === `${budget.id}:delete` ? 'Deleting...' : 'Delete'}
-                      </Button>
-                    </div>
-                    <div className={styles.exportButtons}>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => handleBudgetExport(budget.id, 'csv')}
-                        disabled={
-                          budgetExportingKey === `${budget.id}:csv` ||
-                          budgetActionKey === `${budget.id}:delete`
-                        }
-                      >
-                        {budgetExportingKey === `${budget.id}:csv` ? 'Exporting...' : 'CSV'}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="primary"
-                        onClick={() => handleBudgetExport(budget.id, 'pdf')}
-                        disabled={
-                          budgetExportingKey === `${budget.id}:pdf` ||
-                          budgetActionKey === `${budget.id}:delete`
-                        }
-                      >
-                        {budgetExportingKey === `${budget.id}:pdf` ? 'Exporting...' : 'PDF'}
-                      </Button>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p>No budgets yet.</p>
-              )}
-            </div>
-          </Card>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

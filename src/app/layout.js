@@ -4,9 +4,11 @@ import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Header from '@/components/Header';
 import LoginWalkthroughModal from '@/components/LoginWalkthroughModal';
+import ToastContainer from '@/components/ToastContainer';
 import { useAuthStore } from '@/store/authStore';
 import { useLoanStore } from '@/store/loanStore';
 import { useExpenseStore } from '@/store/expenseStore';
+import { usePayableStore } from '@/store/payableStore';
 import './globals.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 // import 'bootstrap/dist/js/bootstrap.bundle.min.js';
@@ -25,6 +27,7 @@ export default function RootLayout({ children }) {
     useAuthStore.getState().setError(null);
     useLoanStore.getState().setError(null);
     useExpenseStore.getState().setError(null);
+    usePayableStore.getState().setError(null);
   }, [pathname]);
 
   return (
@@ -47,6 +50,7 @@ export default function RootLayout({ children }) {
       <body>
         <Header />
         <LoginWalkthroughModal />
+        <ToastContainer />
         <main className="main-content">
           {children}
         </main>

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { useLoans } from '@/hooks/useLoans';
+import { usePayables } from '@/hooks/usePayables';
 import Button from '@/components/Button';
 import Card from '@/components/Card';
 import Alert from '@/components/Alert';
@@ -16,6 +17,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const { user, token, isAuthChecked } = useAuth();
   const { loans, isLoading, fetchLoans } = useLoans();
+  const { summary: payableSummary, payableApiAvailable, fetchPayables } = usePayables();
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
@@ -28,8 +30,8 @@ export default function DashboardPage() {
       return;
     }
 
-    fetchLoans();
-  }, [isAuthChecked, token, router, fetchLoans]);
+    Promise.allSettled([fetchLoans(), fetchPayables()]);
+  }, [isAuthChecked, token, router, fetchLoans, fetchPayables]);
 
   const stats = useMemo(() => {
     if (!loans || loans.length === 0) {
@@ -135,6 +137,9 @@ export default function DashboardPage() {
             <Link href="/expenses">
               <Button variant="secondary">Expenses</Button>
             </Link>
+            <Link href="/payables">
+              <Button variant="secondary">Payables</Button>
+            </Link>
             <Link href="/loans/new">
               <Button variant="primary">Record New Loan</Button>
             </Link>
@@ -194,6 +199,43 @@ export default function DashboardPage() {
           </Link>
         )}
       </div>
+
+      {payableApiAvailable && (
+        <Card className={styles.payablesWidget}>
+          <div className={styles.payablesHeader}>
+            <h3>Payables Snapshot</h3>
+            <Link href="/payables">
+              <Button variant="secondary" size="sm">Open Payables</Button>
+            </Link>
+          </div>
+          <div className={styles.payablesGrid}>
+            <div>
+              <span>Total Payables</span>
+              <strong>{formatCurrency(payableSummary.total_payables || 0)}</strong>
+            </div>
+            <div>
+              <span>Paid Amount</span>
+              <strong>{formatCurrency(payableSummary.total_paid || 0)}</strong>
+            </div>
+            <div>
+              <span>Balance Remaining</span>
+              <strong>{formatCurrency(payableSummary.total_balance || 0)}</strong>
+            </div>
+            <div>
+              <span>Upcoming Dues (7 Days)</span>
+              <strong>{payableSummary.upcoming_due_count || 0}</strong>
+            </div>
+            <div>
+              <span>Overdue</span>
+              <strong>{payableSummary.overdue_count || 0}</strong>
+            </div>
+            <div>
+              <span>Completed</span>
+              <strong>{payableSummary.completed_count || 0}</strong>
+            </div>
+          </div>
+        </Card>
+      )}
     </div>
   );
 }

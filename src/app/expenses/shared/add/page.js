@@ -3,15 +3,16 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useExpenseSharing } from '@/hooks/useExpenseSharing';
+import { useToast } from '@/hooks/useToast';
 import { useAuth } from '@/hooks/useAuth';
 import SharedExpenseForm from '@/components/SharedExpenseForm';
-import Alert from '@/components/Alert';
 import styles from './page.module.css';
 
 export default function AddSharedExpensePage() {
   const router = useRouter();
+  const toast = useToast();
   const { user } = useAuth();
-  const { isLoading, error, createSharedExpense } = useExpenseSharing();
+  const { isLoading, createSharedExpense } = useExpenseSharing();
 
   useEffect(() => {
     if (!user) {
@@ -22,9 +23,10 @@ export default function AddSharedExpensePage() {
   const handleSubmit = async (formData) => {
     try {
       await createSharedExpense(formData);
+      toast.success('Shared expense created successfully.');
       router.push('/expenses/shared');
     } catch (err) {
-      console.error('Failed to create shared expense:', err);
+      toast.error(err?.response?.data?.message || 'Failed to create shared expense');
     }
   };
 
@@ -41,12 +43,9 @@ export default function AddSharedExpensePage() {
             Add a shared expense and choose equal or custom split among participants.
           </p>
 
-          {error && <Alert type="error" message={error} />}
-
           <SharedExpenseForm
             onSubmit={handleSubmit}
             isLoading={isLoading}
-            error={error}
           />
         </div>
       </main>

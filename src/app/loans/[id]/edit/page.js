@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { useLoans } from '@/hooks/useLoans';
+import { useToast } from '@/hooks/useToast';
 import Button from '@/components/Button';
 import Input from '@/components/Input';
 import Card from '@/components/Card';
@@ -15,6 +16,7 @@ import styles from './page.module.css';
 export default function EditLoanPage() {
   const router = useRouter();
   const params = useParams();
+  const toast = useToast();
   const { token, isAuthChecked } = useAuth();
   const { currentLoan, isLoading, fetchLoanById, updateLoan } = useLoans();
   const [formError, setFormError] = useState('');
@@ -96,10 +98,9 @@ export default function EditLoanPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setFormError('');
 
     if (!formData.borrower_name || !formData.principal || !formData.interest_rate || !formData.duration_months) {
-      setFormError('Please fill in all required fields');
+      toast.error('Please fill in all required fields.');
       return;
     }
 
@@ -108,7 +109,7 @@ export default function EditLoanPage() {
     const months = parseInt(formData.duration_months, 10);
 
     if (principal <= 0 || rate < 0 || months <= 0) {
-      setFormError('Please enter valid amounts');
+      toast.error('Please enter valid amounts.');
       return;
     }
 
@@ -125,9 +126,10 @@ export default function EditLoanPage() {
         duration_months: months,
         total_receivable: total,
       });
+      toast.success('Loan updated successfully.');
       router.push(`/loans/${params.id}`);
     } catch (err) {
-      setFormError(err.response?.data?.message || 'Failed to update loan');
+      toast.error(err.response?.data?.message || 'Failed to update loan');
     } finally {
       setIsSubmitting(false);
     }

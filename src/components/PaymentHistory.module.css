@@ -1,0 +1,36 @@
+.empty {
+  margin: 0;
+  color: #5f7589;
+}
+
+.tableWrap {
+  border: 1px solid #ccdae7;
+  border-radius: 14px;
+  overflow: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 620px;
+}
+
+.table th,
+.table td {
+  padding: 0.68rem;
+  border-bottom: 1px solid #d9e5ee;
+  text-align: left;
+}
+
+.table th {
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #4f657a;
+  background: #eff5fb;
+}
+
+.table td {
+  color: #193145;
+  font-size: 0.85rem;
+}
