@@ -18,6 +18,20 @@ import { formatCurrency, formatDate } from '@/utils/calculations';
 import styles from './page.module.css';
 
 const SORT_OPTIONS = ['due_date', 'amount_paid', 'created_at'];
+const MONTH_OPTIONS = [
+  { value: 0, label: 'January' },
+  { value: 1, label: 'February' },
+  { value: 2, label: 'March' },
+  { value: 3, label: 'April' },
+  { value: 4, label: 'May' },
+  { value: 5, label: 'June' },
+  { value: 6, label: 'July' },
+  { value: 7, label: 'August' },
+  { value: 8, label: 'September' },
+  { value: 9, label: 'October' },
+  { value: 10, label: 'November' },
+  { value: 11, label: 'December' },
+];
 
 const downloadBlob = (blob, filename) => {
   const url = URL.createObjectURL(blob);
@@ -42,7 +56,44 @@ const escapeCsv = (value) => {
 const toStatusLabel = (status) =>
   status ? status.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase()) : 'Pending';
 
+const computeSummaryFromPayables = (items = []) => {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+
+  const next7Days = new Date(now);
+  next7Days.setDate(next7Days.getDate() + 7);
+
+  const totalPayables = items.reduce((sum, item) => sum + Number(item.principal_amount || 0), 0);
+  const totalPaid = items.reduce((sum, item) => sum + Number(item.amount_paid || 0), 0);
+  const totalBalance = items.reduce((sum, item) => sum + Number(item.balance || 0), 0);
+  const pendingCount = items.filter((item) => item.status === 'pending').length;
+  const completedCount = items.filter((item) => item.status === 'completed').length;
+
+  const dueItems = items.filter((item) => item.status !== 'completed');
+  const upcoming = dueItems.filter((item) => {
+    const due = new Date(item.due_date);
+    return !Number.isNaN(due.getTime()) && due >= now && due <= next7Days;
+  }).length;
+  const overdue = dueItems.filter((item) => {
+    const due = new Date(item.due_date);
+    return !Number.isNaN(due.getTime()) && due < now;
+  }).length;
+
+  return {
+    total_payables: totalPayables,
+    total_paid: totalPaid,
+    total_balance: totalBalance,
+    pending_count: pendingCount,
+    completed_count: completedCount,
+    upcoming_due_count: upcoming,
+    overdue_count: overdue,
+  };
+};
+
 export default function PayablesPage() {
+  const initialDate = useMemo(() => new Date(), []);
+  const currentMonth = initialDate.getMonth();
+  const currentYear = initialDate.getFullYear();
   const router = useRouter();
   const toast = useToast();
   const { token, isAuthChecked } = useAuth();
@@ -57,6 +108,9 @@ export default function PayablesPage() {
   } = usePayables();
 
   const [isBootstrapping, setIsBootstrapping] = useState(true);
+  const [checkBy, setCheckBy] = useState('all');
+  const [selectedMonth, setSelectedMonth] = useState(currentMonth);
+  const [selectedYear, setSelectedYear] = useState(currentYear);
   const [statusFilter, setStatusFilter] = useState('all');
   const [creditorFilter, setCreditorFilter] = useState('');
   const [sortBy, setSortBy] = useState('due_date');
@@ -70,6 +124,36 @@ export default function PayablesPage() {
     }),
     [statusFilter, creditorFilter, sortBy]
   );
+
+  const yearOptions = useMemo(() => {
+    const dueYears = payables
+      .map((item) => new Date(item.due_date))
+      .filter((date) => !Number.isNaN(date.getTime()))
+      .map((date) => date.getFullYear());
+
+    const uniqueYears = Array.from(new Set([...dueYears, currentYear]));
+    return uniqueYears.sort((a, b) => b - a);
+  }, [payables, currentYear]);
+
+  const displayedPayables = useMemo(() => {
+    if (checkBy === 'all') return payables;
+
+    return payables.filter((item) => {
+      const due = new Date(item.due_date);
+      if (Number.isNaN(due.getTime())) return false;
+
+      if (checkBy === 'yearly') {
+        return due.getFullYear() === selectedYear;
+      }
+
+      return due.getFullYear() === selectedYear && due.getMonth() === selectedMonth;
+    });
+  }, [payables, checkBy, selectedYear, selectedMonth]);
+
+  const displayedSummary = useMemo(() => {
+    if (checkBy === 'all') return summary;
+    return computeSummaryFromPayables(displayedPayables);
+  }, [summary, displayedPayables, checkBy]);
 
   useEffect(() => {
     if (!isAuthChecked) return;
@@ -109,12 +193,24 @@ export default function PayablesPage() {
     setStatusFilter('all');
     setCreditorFilter('');
     setSortBy('due_date');
+    setCheckBy('all');
+    setSelectedMonth(currentMonth);
+    setSelectedYear(currentYear);
     await fetchPayables({
       status: 'all',
       creditor_name: '',
       sort_by: 'due_date',
     });
   };
+
+  const checkByLabel = useMemo(() => {
+    if (checkBy === 'yearly') return `year ${selectedYear}`;
+    if (checkBy === 'monthly') {
+      const monthLabel = MONTH_OPTIONS.find((month) => month.value === selectedMonth)?.label;
+      return `${monthLabel} ${selectedYear}`;
+    }
+    return 'all periods';
+  }, [checkBy, selectedMonth, selectedYear]);
 
   const handleDelete = async (payable) => {
     const canDelete = payable?.status === 'pending' && Number(payable?.amount_paid || 0) <= 0;
@@ -155,9 +251,9 @@ export default function PayablesPage() {
     lines.push(escapeCsv('Payables Summary Report'));
     lines.push(`${escapeCsv('Generated At')},${escapeCsv(new Date().toISOString())}`);
     lines.push('');
-    lines.push(`${escapeCsv('Total Payables')},${escapeCsv(summary.total_payables.toFixed(2))}`);
-    lines.push(`${escapeCsv('Total Paid')},${escapeCsv(summary.total_paid.toFixed(2))}`);
-    lines.push(`${escapeCsv('Total Balance')},${escapeCsv(summary.total_balance.toFixed(2))}`);
+    lines.push(`${escapeCsv('Total Payables')},${escapeCsv(displayedSummary.total_payables.toFixed(2))}`);
+    lines.push(`${escapeCsv('Total Paid')},${escapeCsv(displayedSummary.total_paid.toFixed(2))}`);
+    lines.push(`${escapeCsv('Total Balance')},${escapeCsv(displayedSummary.total_balance.toFixed(2))}`);
     lines.push('');
     lines.push(
       [
@@ -174,7 +270,7 @@ export default function PayablesPage() {
         .join(',')
     );
 
-    payables.forEach((item) => {
+    displayedPayables.forEach((item) => {
       lines.push(
         [
           item.creditor_name,
@@ -206,12 +302,12 @@ export default function PayablesPage() {
       startY: 28,
       head: [['Metric', 'Value']],
       body: [
-        ['Total Payables', formatCurrency(summary.total_payables)],
-        ['Total Paid', formatCurrency(summary.total_paid)],
-        ['Total Balance', formatCurrency(summary.total_balance)],
-        ['Upcoming (7 Days)', String(summary.upcoming_due_count || 0)],
-        ['Overdue', String(summary.overdue_count || 0)],
-        ['Completed', String(summary.completed_count || 0)],
+        ['Total Payables', formatCurrency(displayedSummary.total_payables)],
+        ['Total Paid', formatCurrency(displayedSummary.total_paid)],
+        ['Total Balance', formatCurrency(displayedSummary.total_balance)],
+        ['Upcoming (7 Days)', String(displayedSummary.upcoming_due_count || 0)],
+        ['Overdue', String(displayedSummary.overdue_count || 0)],
+        ['Completed', String(displayedSummary.completed_count || 0)],
       ],
       styles: { fontSize: 9 },
       headStyles: { fillColor: [37, 99, 235] },
@@ -220,7 +316,7 @@ export default function PayablesPage() {
     autoTable(doc, {
       startY: (doc.lastAutoTable?.finalY || 32) + 8,
       head: [['Creditor', 'Status', 'Principal', 'Paid', 'Balance', 'Due Date']],
-      body: payables.map((item) => [
+      body: displayedPayables.map((item) => [
         item.creditor_name,
         toStatusLabel(item.status),
         formatCurrency(item.principal_amount || 0),
@@ -256,7 +352,7 @@ export default function PayablesPage() {
         </Alert>
       )}
 
-      <PayablesSummary summary={summary} />
+      <PayablesSummary summary={displayedSummary} />
 
       <Card>
         <div className={styles.toolbar}>
@@ -271,6 +367,44 @@ export default function PayablesPage() {
               <option value="partially_paid">Partially Paid</option>
               <option value="completed">Completed</option>
             </select>
+
+            <select
+              className={styles.selectInput}
+              value={checkBy}
+              onChange={(e) => setCheckBy(e.target.value)}
+            >
+              <option value="all">Check: All</option>
+              <option value="monthly">Check: Monthly</option>
+              <option value="yearly">Check: Yearly</option>
+            </select>
+
+            {checkBy === 'monthly' && (
+              <select
+                className={styles.selectInput}
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(Number(e.target.value))}
+              >
+                {MONTH_OPTIONS.map((month) => (
+                  <option key={month.value} value={month.value}>
+                    Month: {month.label}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            {checkBy !== 'all' && (
+              <select
+                className={styles.selectInput}
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(Number(e.target.value))}
+              >
+                {yearOptions.map((year) => (
+                  <option key={year} value={year}>
+                    Year: {year}
+                  </option>
+                ))}
+              </select>
+            )}
 
             <input
               type="text"
@@ -306,10 +440,10 @@ export default function PayablesPage() {
           </form>
 
           <div className={styles.actions}>
-            <Button variant="secondary" onClick={handleExportCsv} disabled={!payables.length}>
+            <Button variant="secondary" onClick={handleExportCsv} disabled={!displayedPayables.length}>
               Export CSV
             </Button>
-            <Button variant="secondary" onClick={handleExportPdf} disabled={!payables.length}>
+            <Button variant="secondary" onClick={handleExportPdf} disabled={!displayedPayables.length}>
               Export PDF
             </Button>
             <Link href="/payables/add">
@@ -319,11 +453,12 @@ export default function PayablesPage() {
         </div>
 
         <div className={styles.resultMeta}>
-          Showing {payables.length} payable{payables.length === 1 ? '' : 's'}
+          Showing {displayedPayables.length} of {payables.length} payable
+          {payables.length === 1 ? '' : 's'} ({checkByLabel})
         </div>
 
         <PayableTable
-          payables={payables}
+          payables={displayedPayables}
           isLoading={isLoading}
           onView={(id) => router.push(`/payables/${id}`)}
           onEdit={(id) => router.push(`/payables/${id}/edit`)}
