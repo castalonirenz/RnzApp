@@ -34,6 +34,10 @@ export default function LoanCard({ loan, onView, onEdit, onDelete }) {
           <span className={styles.value}>{loan.duration_months} months</span>
         </div>
         <div className={styles.detailRow}>
+          <span className={styles.label}>Monthly Payment:</span>
+          <span className={styles.value}>{formatCurrency(loan.monthly_payment)}</span>
+        </div>
+        <div className={styles.detailRow}>
           <span className={styles.label}>Total Due:</span>
           <span className={styles.value}>{formatCurrency(loan.total_receivable)}</span>
         </div>
