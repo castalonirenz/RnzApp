@@ -58,6 +58,8 @@ export default function LoansPage() {
     return filteredLoans.slice(start, start + LOANS_PER_PAGE);
   }, [filteredLoans, currentPageSafe]);
 
+  
+
   const handleDelete = async (id, status) => {
     if (status !== 'pending' && status !== 'completed') {
       toast.warning('Only pending or completed loans can be deleted.');
