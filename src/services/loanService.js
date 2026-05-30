@@ -187,8 +187,15 @@ const mapStatusToApi = (status) => {
 };
 
 export const loanService = {
-  getLoans: async () => {
-    const response = await apiClient.get('/loans');
+  getLoans: async (filters = {}) => {
+    const params = {};
+    const status = mapStatusToApi(filters.status);
+
+    if (status && status !== 'all') {
+      params.status = status;
+    }
+
+    const response = await apiClient.get('/loans', { params });
     const loans = extractLoanList(response.data);
     return loans.map(normalizeLoanFromApi);
   },

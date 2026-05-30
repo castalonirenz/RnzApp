@@ -1,6 +1,7 @@
 # My Borrower API Endpoint Docs
 
 Base URL (local): `http://localhost:4000`  
+Base URL (Vercel): `https://<your-api-project>.vercel.app`  
 API Prefix: `/api`
 Database: MongoDB (ObjectId-based IDs)
 
@@ -161,6 +162,11 @@ Interest calculation behavior:
 - Path: `/api/loans`
 - Auth: Yes
 
+Query parameters:
+- `status` optional. Accepted values: `pending`, `ongoing`, `completed`.
+- Example: `/api/loans?status=ongoing`
+- Omit `status` to return all loans.
+
 Success (`200`):
 
 ```json
@@ -182,6 +188,16 @@ Success (`200`):
       "createdAt": "2026-04-08T10:00:00.000Z"
     }
   ]
+}
+```
+
+Invalid status filter (`422`):
+
+```json
+{
+  "success": false,
+  "status": "error",
+  "message": "Status must be pending, ongoing, or completed."
 }
 ```
 
@@ -432,9 +448,95 @@ Success (`200`):
 }
 ```
 
+## Shared Expense Endpoints
+
+### 13) List Shared Expenses
+
+- Method: `GET`
+- Path: `/api/expenses/shared`
+- Auth: Yes
+
+Query parameters:
+- `limit` optional positive integer
+- `offset` optional zero-or-greater integer
+- `sort` optional: `created_at`, `-created_at`, `updated_at`, `-updated_at`, `title`, `-title`
+
+### 14) Create Shared Expense
+
+- Method: `POST`
+- Path: `/api/expenses/shared`
+- Auth: Yes
+
+Request body for equal split:
+
+```json
+{
+  "title": "Dinner",
+  "amount": 2000,
+  "description": "Team dinner",
+  "participants": ["John", "Jane", "Mike"],
+  "split_mode": "equal"
+}
+```
+
+Request body for custom split:
+
+```json
+{
+  "title": "Dinner + Water",
+  "amount": 1800,
+  "description": "Custom itemized dinner",
+  "participants": ["Jane", "John"],
+  "split_mode": "custom",
+  "participant_shares": [
+    {
+      "name": "Jane",
+      "items": [
+        { "name": "Bottled water", "amount": 550 },
+        { "name": "Rice", "amount": 300 }
+      ]
+    },
+    {
+      "name": "John",
+      "items": [{ "name": "Softdrinks", "amount": 950 }]
+    }
+  ]
+}
+```
+
+Validation:
+- `split_items` is optional for new itemized custom forms; when omitted, it is derived from `participant_shares[].items[].name`.
+- `participants` must contain 1 to 20 unique names.
+- `participant_shares` is required when `split_mode` is `custom` and must match participants exactly.
+- `participant_shares[].items` contains the editable item rows for that participant.
+- For custom itemized splits, participant totals are derived from item amounts and all item amounts must total `amount`.
+- For `equal`, the backend calculates `participant_shares`.
+
+Success (`201`) returns the shared expense with `split_items`, `split_mode`, `participant_shares[].items`, and `share_per_person`.
+
+### 15) Update Shared Expense
+
+- Method: `PUT`
+- Path: `/api/expenses/shared/:id`
+- Auth: Yes
+
+Body: same format as create. For custom itemized edits, send the complete updated `participant_shares` array with all item rows under each participant.
+
+### 16) Shared Expense Detail, Summary, Settlement, Export
+
+- `GET /api/expenses/shared/:id`
+- `DELETE /api/expenses/shared/:id`
+- `GET /api/expenses/shared/summary`
+- `GET /api/expenses/shared/settlement`
+- `GET /api/expenses/shared/export?format=csv|pdf`
+
+Shared expense detail returns `participant_shares[].items`; use those rows to render the per-person item list and to prefill the edit shared expense form.
+
+CSV/PDF exports include split items, participant share totals, and item row details when available.
+
 ## Health Endpoint
 
-### 13) API Health
+### 17) API Health
 
 - Method: `GET`
 - Path: `/health`

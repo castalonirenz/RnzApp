@@ -19,9 +19,13 @@ Body:
 {
   "name": "Juan Dela Cruz",
   "email": "juan@example.com",
-  "password": "secret123"
+  "password": "secret123",
+  "confirm_password": "secret123"
 }
 ```
+
+- Password minimum length: 8 characters.
+- `confirm_password` must match `password`.
 
 ### `POST /login`
 Body:
@@ -38,6 +42,36 @@ Protected.
 
 ### `GET /user`
 Protected.
+
+### `POST /forgot-password`
+Body:
+
+```json
+{
+  "email": "juan@example.com"
+}
+```
+
+- Always returns success message even if email does not exist (security-safe behavior).
+- If `AUTH_FORGOT_PASSWORD_VERBOSE=true`, response also includes delivery debug data:
+  - `data.email_sent`
+  - `data.delivery_method`
+  - `data.reason` (if failed)
+  - `data.reset_link` and `data.reset_token` (dev troubleshooting fallback)
+
+### `POST /reset-password`
+Body:
+
+```json
+{
+  "token": "reset_token_from_email",
+  "password": "newSecret123",
+  "confirm_password": "newSecret123"
+}
+```
+
+- Password minimum length: 8 characters.
+- `confirm_password` must match `password`.
 
 ## Loans
 
@@ -63,6 +97,14 @@ Protected.
 
 ### `GET /loans`
 Protected. Returns all user loans.
+
+Optional query parameters:
+- `status`: filter loans by status. Accepted values are `pending`, `ongoing`, and `completed`.
+
+Examples:
+- `GET /loans?status=pending`
+- `GET /loans?status=ongoing`
+- `GET /loans?status=completed`
 
 ### `POST /loans`
 Protected.
@@ -198,6 +240,100 @@ Returns grouped totals:
   { "period": "2026-04", "total": 5300.75 }
 ]
 ```
+
+## Shared Expenses
+
+### Shared expense object
+
+```json
+{
+  "id": "507f1f77bcf86cd799439011",
+  "title": "Dinner + Water",
+  "amount": 1800,
+  "description": "Mike only had water",
+  "split_items": ["Bottled water", "Rice", "Softdrinks"],
+  "participants": ["Jane", "John"],
+  "split_mode": "custom",
+  "participant_shares": [
+    {
+      "name": "Jane",
+      "amount": 850,
+      "items": [
+        { "name": "Bottled water", "amount": 550 },
+        { "name": "Rice", "amount": 300 }
+      ]
+    },
+    {
+      "name": "John",
+      "amount": 950,
+      "items": [{ "name": "Softdrinks", "amount": 950 }]
+    }
+  ],
+  "share_per_person": 900,
+  "created_at": "2026-04-25T10:30:00.000Z",
+  "updated_at": "2026-04-25T10:30:00.000Z"
+}
+```
+
+### `GET /expenses/shared`
+Protected. Returns shared expenses.
+
+`GET /expenses/shared/:id` returns `participant_shares[].items`; frontend should use those rows for the shared expense details view and to prefill the edit shared expense form.
+
+### `POST /expenses/shared`
+Protected.
+
+Equal split body:
+
+```json
+{
+  "title": "Dinner",
+  "amount": 2000,
+  "description": "Team dinner",
+  "participants": ["John", "Jane", "Mike"],
+  "split_mode": "equal"
+}
+```
+
+Custom split body:
+
+```json
+{
+  "title": "Dinner + Water",
+  "amount": 1800,
+  "description": "Custom itemized dinner",
+  "participants": ["Jane", "John"],
+  "split_mode": "custom",
+  "participant_shares": [
+    {
+      "name": "Jane",
+      "items": [
+        { "name": "Bottled water", "amount": 550 },
+        { "name": "Rice", "amount": 300 }
+      ]
+    },
+    {
+      "name": "John",
+      "items": [{ "name": "Softdrinks", "amount": 950 }]
+    }
+  ]
+}
+```
+
+- `split_items` is optional for new itemized custom forms and is derived from `participant_shares[].items[].name` when omitted.
+- For `custom`, `participant_shares` is required, each participant has `items`, and all item amounts must total `amount`.
+- For `equal`, the backend calculates equal `participant_shares`.
+
+### `PUT /expenses/shared/:id`
+Protected. Same body as create. For custom itemized edits, send the complete updated `participant_shares` array with all item rows under each participant.
+
+### Other shared expense routes
+
+- `GET /expenses/shared/:id`
+- `DELETE /expenses/shared/:id`
+- `GET /expenses/shared/summary`
+- `GET /expenses/shared/settlement`
+- `GET /expenses/shared/export?format=csv|pdf`
 
 ## Budgets
 

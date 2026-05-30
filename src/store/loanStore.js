@@ -12,10 +12,10 @@ export const useLoanStore = create((set, get) => ({
   setError: (error) => set({ error }),
   setLoading: (isLoading) => set({ isLoading }),
 
-  fetchLoans: async () => {
+  fetchLoans: async (filters = {}) => {
     set({ isLoading: true, error: null });
     try {
-      const loans = await loanService.getLoans();
+      const loans = await loanService.getLoans(filters);
       set({ loans, isLoading: false });
     } catch (error) {
       set({ 

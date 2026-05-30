@@ -101,6 +101,12 @@
   color: #6b7280;
 }
 
+.splitItems {
+  font-size: 0.85rem;
+  color: #2563eb;
+  font-weight: 600;
+}
+
 .amountCell {
   text-align: right;
   min-width: 120px;
