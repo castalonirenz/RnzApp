@@ -37,7 +37,19 @@
   background: #fff;
 }
 
-.searchInput:focus {
+.filterSelect {
+  min-width: 150px;
+  height: 42px;
+  padding: 0 0.75rem;
+  border: 1px solid #c7d7e5;
+  border-radius: 12px;
+  background: #fff;
+  color: #25384f;
+  font-weight: 600;
+}
+
+.searchInput:focus,
+.filterSelect:focus {
   outline: none;
   border-color: #0f766e;
   box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.14);
@@ -102,6 +114,10 @@
 
   .searchInput {
     min-width: 100%;
+    width: 100%;
+  }
+
+  .filterSelect {
     width: 100%;
   }
 

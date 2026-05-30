@@ -1,6 +1,7 @@
 # My Borrower API Endpoint Docs
 
 Base URL (local): `http://localhost:4000`  
+Base URL (Vercel): `https://<your-api-project>.vercel.app`  
 API Prefix: `/api`
 Database: MongoDB (ObjectId-based IDs)
 
@@ -161,6 +162,11 @@ Interest calculation behavior:
 - Path: `/api/loans`
 - Auth: Yes
 
+Query parameters:
+- `status` optional. Accepted values: `pending`, `ongoing`, `completed`.
+- Example: `/api/loans?status=ongoing`
+- Omit `status` to return all loans.
+
 Success (`200`):
 
 ```json
@@ -182,6 +188,16 @@ Success (`200`):
       "createdAt": "2026-04-08T10:00:00.000Z"
     }
   ]
+}
+```
+
+Invalid status filter (`422`):
+
+```json
+{
+  "success": false,
+  "status": "error",
+  "message": "Status must be pending, ongoing, or completed."
 }
 ```
 

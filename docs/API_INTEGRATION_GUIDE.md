@@ -19,9 +19,13 @@ Body:
 {
   "name": "Juan Dela Cruz",
   "email": "juan@example.com",
-  "password": "secret123"
+  "password": "secret123",
+  "confirm_password": "secret123"
 }
 ```
+
+- Password minimum length: 8 characters.
+- `confirm_password` must match `password`.
 
 ### `POST /login`
 Body:
@@ -38,6 +42,36 @@ Protected.
 
 ### `GET /user`
 Protected.
+
+### `POST /forgot-password`
+Body:
+
+```json
+{
+  "email": "juan@example.com"
+}
+```
+
+- Always returns success message even if email does not exist (security-safe behavior).
+- If `AUTH_FORGOT_PASSWORD_VERBOSE=true`, response also includes delivery debug data:
+  - `data.email_sent`
+  - `data.delivery_method`
+  - `data.reason` (if failed)
+  - `data.reset_link` and `data.reset_token` (dev troubleshooting fallback)
+
+### `POST /reset-password`
+Body:
+
+```json
+{
+  "token": "reset_token_from_email",
+  "password": "newSecret123",
+  "confirm_password": "newSecret123"
+}
+```
+
+- Password minimum length: 8 characters.
+- `confirm_password` must match `password`.
 
 ## Loans
 
@@ -63,6 +97,14 @@ Protected.
 
 ### `GET /loans`
 Protected. Returns all user loans.
+
+Optional query parameters:
+- `status`: filter loans by status. Accepted values are `pending`, `ongoing`, and `completed`.
+
+Examples:
+- `GET /loans?status=pending`
+- `GET /loans?status=ongoing`
+- `GET /loans?status=completed`
 
 ### `POST /loans`
 Protected.

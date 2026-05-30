@@ -11,6 +11,12 @@ import LoanCard from '@/components/LoanCard';
 import styles from './page.module.css';
 
 const LOANS_PER_PAGE = 6;
+const STATUS_FILTERS = [
+  { value: 'all', label: 'All Status' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'ongoing', label: 'Ongoing' },
+  { value: 'completed', label: 'Completed' },
+];
 
 export default function LoansPage() {
   const router = useRouter();
@@ -18,6 +24,7 @@ export default function LoansPage() {
   const { token, isAuthChecked } = useAuth();
   const { loans, isLoading, fetchLoans, setCurrentLoan, deleteLoan } = useLoans();
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
@@ -30,8 +37,8 @@ export default function LoansPage() {
       return;
     }
 
-    fetchLoans();
-  }, [isAuthChecked, token, router, fetchLoans]);
+    fetchLoans({ status: statusFilter });
+  }, [isAuthChecked, token, router, fetchLoans, statusFilter]);
 
   const filteredLoans = useMemo(() => {
     const keyword = searchTerm.trim().toLowerCase();
@@ -50,6 +57,7 @@ export default function LoansPage() {
         .some((field) => String(field).toLowerCase().includes(keyword));
     });
   }, [loans, searchTerm]);
+  const hasActiveFilters = searchTerm.trim().length > 0 || statusFilter !== 'all';
 
   const totalPages = Math.max(1, Math.ceil(filteredLoans.length / LOANS_PER_PAGE));
   const currentPageSafe = Math.min(currentPage, totalPages);
@@ -57,8 +65,6 @@ export default function LoansPage() {
     const start = (currentPageSafe - 1) * LOANS_PER_PAGE;
     return filteredLoans.slice(start, start + LOANS_PER_PAGE);
   }, [filteredLoans, currentPageSafe]);
-
-  
 
   const handleDelete = async (id, status) => {
     if (status !== 'pending' && status !== 'completed') {
@@ -108,6 +114,21 @@ export default function LoansPage() {
               setCurrentPage(1);
             }}
           />
+          <select
+            className={styles.filterSelect}
+            value={statusFilter}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setCurrentPage(1);
+            }}
+            aria-label="Filter loans by status"
+          >
+            {STATUS_FILTERS.map((status) => (
+              <option key={status.value} value={status.value}>
+                {status.label}
+              </option>
+            ))}
+          </select>
           <Link href="/loans/new">
             <Button variant="primary">Record New Loan</Button>
           </Link>
@@ -133,9 +154,14 @@ export default function LoansPage() {
         ) : (
           <div className={styles.emptyState}>
             <h2>No matching loans</h2>
-            <p>Try another search term.</p>
+            <p>Try another search term or status filter.</p>
           </div>
         )
+      ) : hasActiveFilters ? (
+        <div className={styles.emptyState}>
+          <h2>No matching loans</h2>
+          <p>Try another search term or status filter.</p>
+        </div>
       ) : (
         <div className={styles.emptyState}>
           <h2>No loans yet</h2>
