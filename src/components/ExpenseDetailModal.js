@@ -40,15 +40,23 @@ export default function ExpenseDetailModal({ expense, isOpen, onClose, onEdit, o
                 }))
                 .filter((entry) => entry.item || Number(entry.amount) > 0)
             : (Array.isArray(item?.items)
-                ? item.items.map((value) => String(value).trim()).filter(Boolean)
+                ? item.items
+                    .map((entry) => ({
+                      item:
+                        typeof entry === 'string'
+                          ? entry.trim()
+                          : String(entry?.name ?? entry?.item ?? entry?.description ?? '').trim(),
+                      amount: Number(entry?.amount ?? entry?.price ?? 0),
+                    }))
+                    .filter((entry) => entry.item || Number(entry.amount) > 0)
                 : String(item?.item ?? item?.split_item ?? item?.splitItem ?? '')
                     .split(',')
                     .map((value) => value.trim())
                     .filter(Boolean)
-              ).map((value, index) => ({
-                item: value,
-                amount: index === 0 ? amount : 0,
-              }));
+                    .map((value, index) => ({
+                      item: value,
+                      amount: index === 0 ? amount : 0,
+                    })));
         if (name && Number.isFinite(amount)) {
           acc[name] = {
             amount,
@@ -58,12 +66,27 @@ export default function ExpenseDetailModal({ expense, isOpen, onClose, onEdit, o
         return acc;
       }, {})
     : {};
-  const hasParticipantItems = Object.values(participantShareMap).some((share) => share.items?.length > 0);
 
   const resolveParticipantShare = (name) => {
     if (Number.isFinite(participantShareMap[name]?.amount)) return participantShareMap[name].amount;
     return expense.share_per_person;
   };
+
+  const participantItemizedSplits = [
+    ...participantNames,
+    ...Object.keys(participantShareMap).filter((name) => !participantNames.includes(name)),
+  ]
+    .map((name) => ({
+      name,
+      amount: resolveParticipantShare(name),
+      items: participantShareMap[name]?.items ?? [],
+    }))
+    .filter((share) => share.items.length > 0);
+  const hasParticipantItems = participantItemizedSplits.length > 0;
+  const participantItemizedSplitMap = participantItemizedSplits.reduce((acc, share) => {
+    acc[share.name] = share.items;
+    return acc;
+  }, {});
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-PH', {
@@ -149,29 +172,30 @@ export default function ExpenseDetailModal({ expense, isOpen, onClose, onEdit, o
               <div className={styles.participantsList}>
                 {participantNames.map((participant, idx) => (
                   <div key={idx} className={styles.participantItem}>
-                    <span className={styles.participantName}>
-                      {participant}
-                      {participantShareMap[participant]?.items?.length > 0 && (
-                        <span className={styles.participantItemList}>
-                          {participantShareMap[participant].items.map((entry, itemIndex) => (
-                            <span
-                              key={`${participant}-${entry.item}-${itemIndex}`}
-                              className={styles.participantItemName}
-                            >
-                              <span>{entry.item}</span>
-                              {Number(entry.amount) > 0 && (
-                                <span className={styles.participantItemAmount}>
-                                  {formatCurrency(entry.amount)}
-                                </span>
-                              )}
+                    <div className={styles.participantHeader}>
+                      <span className={styles.participantName}>{participant}</span>
+                      <span className={styles.participantShare}>
+                        {formatCurrency(resolveParticipantShare(participant))}
+                      </span>
+                    </div>
+
+                    {participantItemizedSplitMap[participant]?.length > 0 && (
+                      <div className={styles.itemizedRows}>
+                        {participantItemizedSplitMap[participant].map((entry, itemIndex) => (
+                          <div
+                            key={`${participant}-${entry.item}-${itemIndex}`}
+                            className={styles.itemizedRow}
+                          >
+                            <span className={styles.itemizedItemName}>
+                              {entry.item || 'Item'}
                             </span>
-                          ))}
-                        </span>
-                      )}
-                    </span>
-                    <span className={styles.participantShare}>
-                      {formatCurrency(resolveParticipantShare(participant))}
-                    </span>
+                            <span className={styles.itemizedItemAmount}>
+                              {formatCurrency(entry.amount)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

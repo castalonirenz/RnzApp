@@ -474,7 +474,6 @@ Request body for equal split:
   "title": "Dinner",
   "amount": 2000,
   "description": "Team dinner",
-  "split_items": ["Dinner mains", "Service charge"],
   "participants": ["John", "Jane", "Mike"],
   "split_mode": "equal"
 }
@@ -485,26 +484,35 @@ Request body for custom split:
 ```json
 {
   "title": "Dinner + Water",
-  "amount": 2000,
-  "description": "Mike only had water",
-  "split_items": ["Dinner mains", "Bottled water"],
-  "participants": ["John", "Jane", "Mike"],
+  "amount": 1800,
+  "description": "Custom itemized dinner",
+  "participants": ["Jane", "John"],
   "split_mode": "custom",
   "participant_shares": [
-    { "name": "John", "amount": 900 },
-    { "name": "Jane", "amount": 900 },
-    { "name": "Mike", "amount": 200 }
+    {
+      "name": "Jane",
+      "items": [
+        { "name": "Bottled water", "amount": 550 },
+        { "name": "Rice", "amount": 300 }
+      ]
+    },
+    {
+      "name": "John",
+      "items": [{ "name": "Softdrinks", "amount": 950 }]
+    }
   ]
 }
 ```
 
 Validation:
-- `split_items` is required for both `equal` and `custom`; send 1 to 50 non-empty item names/descriptions.
+- `split_items` is optional for new itemized custom forms; when omitted, it is derived from `participant_shares[].items[].name`.
 - `participants` must contain 1 to 20 unique names.
 - `participant_shares` is required when `split_mode` is `custom` and must match participants exactly.
+- `participant_shares[].items` contains the editable item rows for that participant.
+- For custom itemized splits, participant totals are derived from item amounts and all item amounts must total `amount`.
 - For `equal`, the backend calculates `participant_shares`.
 
-Success (`201`) returns the shared expense with `split_items`, `split_mode`, `participant_shares`, and `share_per_person`.
+Success (`201`) returns the shared expense with `split_items`, `split_mode`, `participant_shares[].items`, and `share_per_person`.
 
 ### 15) Update Shared Expense
 
@@ -512,7 +520,7 @@ Success (`201`) returns the shared expense with `split_items`, `split_mode`, `pa
 - Path: `/api/expenses/shared/:id`
 - Auth: Yes
 
-Body: same format as create. `split_items` is required on edit and should contain the complete updated list of item(s) included in the split.
+Body: same format as create. For custom itemized edits, send the complete updated `participant_shares` array with all item rows under each participant.
 
 ### 16) Shared Expense Detail, Summary, Settlement, Export
 
@@ -522,7 +530,9 @@ Body: same format as create. `split_items` is required on edit and should contai
 - `GET /api/expenses/shared/settlement`
 - `GET /api/expenses/shared/export?format=csv|pdf`
 
-CSV/PDF exports include split items and participant share details.
+Shared expense detail returns `participant_shares[].items`; use those rows to render the per-person item list and to prefill the edit shared expense form.
+
+CSV/PDF exports include split items, participant share totals, and item row details when available.
 
 ## Health Endpoint
 

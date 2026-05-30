@@ -21,27 +21,13 @@ const toNumber = (value, fallback = 0) => {
   return Number.isFinite(n) ? n : fallback;
 };
 
-const buildEqualShares = (participants, totalAmount) => {
-  if (participants.length === 0) return [];
-
-  const totalCents = Math.round(toNumber(totalAmount, 0) * 100);
-  const baseCents = Math.floor(totalCents / participants.length);
-  const remainder = totalCents - baseCents * participants.length;
-
-  return participants.map((name, index) => ({
-    name,
-    amount: (baseCents + (index < remainder ? 1 : 0)) / 100,
-  }));
-};
-
 const emptyItemEntry = () => ({ item: '', amount: 0 });
 
 const normalizeItemizedEntries = (source, fallbackAmount = 0) => {
   const sourceEntries =
     source?.itemized_items ??
     source?.itemizedItems ??
-    source?.split_items ??
-    source?.splitItems ??
+    source?.items ??
     null;
 
   if (Array.isArray(sourceEntries) && sourceEntries.length > 0) {
@@ -62,9 +48,7 @@ const normalizeItemizedEntries = (source, fallbackAmount = 0) => {
   }
 
   const itemNames = parseSplitItems(
-    Array.isArray(source?.items)
-      ? source.items.join(', ')
-      : source?.item ?? source?.split_item ?? source?.splitItem ?? source?.description ?? ''
+    source?.item ?? source?.split_item ?? source?.splitItem ?? source?.description ?? ''
   );
 
   if (itemNames.length === 0) return [emptyItemEntry()];
@@ -117,15 +101,14 @@ const initialCustomSplits = (initialData) => {
   if (fromParticipantShares.length > 0) {
     return fromParticipantShares.reduce((acc, share, index) => {
       const name = String(share?.name ?? share?.participant ?? '').trim();
-      const amount = toNumber(share?.amount ?? share?.share_amount, NaN);
       const entries = normalizeItemizedEntries(
         {
           ...share,
           item: share?.item ?? share?.split_item ?? share?.splitItem ?? splitItems[index] ?? '',
         },
-        amount
+        share?.amount ?? share?.share_amount
       );
-      if (name && Number.isFinite(amount)) acc[name] = { entries };
+      if (name && entries.length > 0) acc[name] = { entries };
       return acc;
     }, {});
   }
@@ -134,15 +117,14 @@ const initialCustomSplits = (initialData) => {
     return initialData.participants.reduce((acc, participant, index) => {
       if (participant && typeof participant === 'object') {
         const name = String(participant?.name ?? participant?.participant ?? '').trim();
-        const amount = toNumber(participant?.amount ?? participant?.share_amount ?? participant?.share, NaN);
         const entries = normalizeItemizedEntries(
           {
             ...participant,
             item: participant?.item ?? participant?.split_item ?? participant?.splitItem ?? splitItems[index] ?? '',
           },
-          amount
+          participant?.amount ?? participant?.share_amount ?? participant?.share
         );
-        if (name && Number.isFinite(amount)) acc[name] = { entries };
+        if (name && entries.length > 0) acc[name] = { entries };
       }
       return acc;
     }, {});
@@ -238,31 +220,20 @@ export default function SharedExpenseForm({
     );
   };
 
-  const getCustomSplitItems = (participants) => {
-    return participants.flatMap((participant) =>
-      getCustomEntries(participant)
-        .map((entry) => String(entry.item ?? '').trim())
-        .filter(Boolean)
-    );
-  };
-
   const buildCustomParticipantShares = (participants) => {
     return participants.map((name) => {
       const entries = getCustomEntries(name)
         .map((entry) => ({
-          item: String(entry.item ?? '').trim(),
+          name: String(entry.item ?? entry.name ?? '').trim(),
           amount: toNumber(entry.amount, 0),
         }))
-        .filter((entry) => entry.item || entry.amount > 0);
-      const items = entries.map((entry) => entry.item).filter(Boolean);
+        .filter((entry) => entry.name || entry.amount > 0);
       const amount = entries.reduce((sum, entry) => sum + entry.amount, 0);
 
       return {
         name,
-        item: items.join(', '),
-        items,
         amount,
-        itemized_items: entries,
+        items: entries,
       };
     });
   };
@@ -279,14 +250,6 @@ export default function SharedExpenseForm({
     const participants = parseParticipants(formData.participants);
     if (participants.length === 0) {
       return 'At least one participant is required.';
-    }
-
-    const splitItems =
-      splitMode === 'custom'
-        ? getCustomSplitItems(participants)
-        : parseSplitItems(formData.split_items);
-    if (splitItems.length === 0) {
-      return 'At least one split item is required.';
     }
 
     if (splitMode === 'custom') {
@@ -339,24 +302,23 @@ export default function SharedExpenseForm({
     const participants = parseParticipants(formData.participants);
     const totalAmount = toNumber(formData.amount, 0);
 
-    const participantShares =
-      splitMode === 'custom'
-        ? buildCustomParticipantShares(participants)
-        : buildEqualShares(participants, totalAmount);
-    const splitItems =
-      splitMode === 'custom'
-        ? participantShares.flatMap((share) => share.items || [])
-        : parseSplitItems(formData.split_items);
-
     const payload = {
       title: formData.title.trim(),
       amount: totalAmount,
       description: formData.description.trim(),
-      split_items: splitItems,
       participants,
       split_mode: splitMode,
-      participant_shares: participantShares,
     };
+
+    if (splitMode === 'custom') {
+      payload.participant_shares = buildCustomParticipantShares(participants);
+      return onSubmit(payload);
+    }
+
+    const splitItems = parseSplitItems(formData.split_items);
+    if (splitItems.length > 0) {
+      payload.split_items = splitItems;
+    }
 
     onSubmit(payload);
   };
@@ -419,7 +381,7 @@ export default function SharedExpenseForm({
 
       {splitMode === 'equal' && (
         <div className={styles.formGroup}>
-          <label htmlFor="split_items">Split Items *</label>
+          <label htmlFor="split_items">Split Items</label>
           <Input
             id="split_items"
             name="split_items"
@@ -429,7 +391,7 @@ export default function SharedExpenseForm({
             onChange={handleChange}
             disabled={isLoading}
           />
-          <small className={styles.hint}>Add at least one item included in this split</small>
+          <small className={styles.hint}>Optional item names for equal split compatibility</small>
         </div>
       )}
 

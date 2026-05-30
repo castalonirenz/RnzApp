@@ -249,17 +249,27 @@ Returns grouped totals:
 {
   "id": "507f1f77bcf86cd799439011",
   "title": "Dinner + Water",
-  "amount": 2000,
+  "amount": 1800,
   "description": "Mike only had water",
-  "split_items": ["Dinner mains", "Bottled water"],
-  "participants": ["John", "Jane", "Mike"],
+  "split_items": ["Bottled water", "Rice", "Softdrinks"],
+  "participants": ["Jane", "John"],
   "split_mode": "custom",
   "participant_shares": [
-    { "name": "John", "amount": 900 },
-    { "name": "Jane", "amount": 900 },
-    { "name": "Mike", "amount": 200 }
+    {
+      "name": "Jane",
+      "amount": 850,
+      "items": [
+        { "name": "Bottled water", "amount": 550 },
+        { "name": "Rice", "amount": 300 }
+      ]
+    },
+    {
+      "name": "John",
+      "amount": 950,
+      "items": [{ "name": "Softdrinks", "amount": 950 }]
+    }
   ],
-  "share_per_person": 666.67,
+  "share_per_person": 900,
   "created_at": "2026-04-25T10:30:00.000Z",
   "updated_at": "2026-04-25T10:30:00.000Z"
 }
@@ -267,6 +277,8 @@ Returns grouped totals:
 
 ### `GET /expenses/shared`
 Protected. Returns shared expenses.
+
+`GET /expenses/shared/:id` returns `participant_shares[].items`; frontend should use those rows for the shared expense details view and to prefill the edit shared expense form.
 
 ### `POST /expenses/shared`
 Protected.
@@ -278,7 +290,6 @@ Equal split body:
   "title": "Dinner",
   "amount": 2000,
   "description": "Team dinner",
-  "split_items": ["Dinner mains", "Service charge"],
   "participants": ["John", "Jane", "Mike"],
   "split_mode": "equal"
 }
@@ -289,25 +300,32 @@ Custom split body:
 ```json
 {
   "title": "Dinner + Water",
-  "amount": 2000,
-  "description": "Mike only had water",
-  "split_items": ["Dinner mains", "Bottled water"],
-  "participants": ["John", "Jane", "Mike"],
+  "amount": 1800,
+  "description": "Custom itemized dinner",
+  "participants": ["Jane", "John"],
   "split_mode": "custom",
   "participant_shares": [
-    { "name": "John", "amount": 900 },
-    { "name": "Jane", "amount": 900 },
-    { "name": "Mike", "amount": 200 }
+    {
+      "name": "Jane",
+      "items": [
+        { "name": "Bottled water", "amount": 550 },
+        { "name": "Rice", "amount": 300 }
+      ]
+    },
+    {
+      "name": "John",
+      "items": [{ "name": "Softdrinks", "amount": 950 }]
+    }
   ]
 }
 ```
 
-- `split_items` is required for both equal and custom splits.
-- For `custom`, `participant_shares` is required and amounts must total `amount`.
+- `split_items` is optional for new itemized custom forms and is derived from `participant_shares[].items[].name` when omitted.
+- For `custom`, `participant_shares` is required, each participant has `items`, and all item amounts must total `amount`.
 - For `equal`, the backend calculates equal `participant_shares`.
 
 ### `PUT /expenses/shared/:id`
-Protected. Same body as create. `split_items` is required on edit.
+Protected. Same body as create. For custom itemized edits, send the complete updated `participant_shares` array with all item rows under each participant.
 
 ### Other shared expense routes
 
