@@ -241,6 +241,82 @@ Returns grouped totals:
 ]
 ```
 
+## Shared Expenses
+
+### Shared expense object
+
+```json
+{
+  "id": "507f1f77bcf86cd799439011",
+  "title": "Dinner + Water",
+  "amount": 2000,
+  "description": "Mike only had water",
+  "split_items": ["Dinner mains", "Bottled water"],
+  "participants": ["John", "Jane", "Mike"],
+  "split_mode": "custom",
+  "participant_shares": [
+    { "name": "John", "amount": 900 },
+    { "name": "Jane", "amount": 900 },
+    { "name": "Mike", "amount": 200 }
+  ],
+  "share_per_person": 666.67,
+  "created_at": "2026-04-25T10:30:00.000Z",
+  "updated_at": "2026-04-25T10:30:00.000Z"
+}
+```
+
+### `GET /expenses/shared`
+Protected. Returns shared expenses.
+
+### `POST /expenses/shared`
+Protected.
+
+Equal split body:
+
+```json
+{
+  "title": "Dinner",
+  "amount": 2000,
+  "description": "Team dinner",
+  "split_items": ["Dinner mains", "Service charge"],
+  "participants": ["John", "Jane", "Mike"],
+  "split_mode": "equal"
+}
+```
+
+Custom split body:
+
+```json
+{
+  "title": "Dinner + Water",
+  "amount": 2000,
+  "description": "Mike only had water",
+  "split_items": ["Dinner mains", "Bottled water"],
+  "participants": ["John", "Jane", "Mike"],
+  "split_mode": "custom",
+  "participant_shares": [
+    { "name": "John", "amount": 900 },
+    { "name": "Jane", "amount": 900 },
+    { "name": "Mike", "amount": 200 }
+  ]
+}
+```
+
+- `split_items` is required for both equal and custom splits.
+- For `custom`, `participant_shares` is required and amounts must total `amount`.
+- For `equal`, the backend calculates equal `participant_shares`.
+
+### `PUT /expenses/shared/:id`
+Protected. Same body as create. `split_items` is required on edit.
+
+### Other shared expense routes
+
+- `GET /expenses/shared/:id`
+- `DELETE /expenses/shared/:id`
+- `GET /expenses/shared/summary`
+- `GET /expenses/shared/settlement`
+- `GET /expenses/shared/export?format=csv|pdf`
+
 ## Budgets
 
 ### Budget object

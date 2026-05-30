@@ -20,6 +20,14 @@ export default function SharedExpenseTable({
       .map((participant) => (typeof participant === 'string' ? participant : participant?.name))
       .filter(Boolean);
   };
+  const hasParticipantItems = (expense) => {
+    if (!Array.isArray(expense?.participant_shares)) return false;
+
+    return expense.participant_shares.some((share) => {
+      if (Array.isArray(share?.items)) return share.items.some(Boolean);
+      return Boolean(String(share?.item ?? share?.split_item ?? share?.splitItem ?? '').trim());
+    });
+  };
 
   if (expenses.length === 0) {
     return (
@@ -83,102 +91,107 @@ export default function SharedExpenseTable({
             </tr>
           </thead>
           <tbody>
-            {expenses.map((expense) => (
-              <tr key={expense.id} className={styles.tableRow}>
-                <td className={styles.titleCell}>
-                  <div className={styles.titleContent}>
-                    <span className={styles.title}>{expense.title}</span>
-                    {expense.description && (
-                      <span className={styles.description}>{expense.description}</span>
-                    )}
-                  </div>
-                </td>
-                <td className={styles.amountCell}>
-                  <span className={styles.amount}>
-                    {formatCurrency(expense.amount)}
-                  </span>
-                </td>
-                <td className={styles.participantsCell}>
-                  {(() => {
-                    const participantNames = getParticipantNames(expense);
-                    return (
-                  <Tooltip
-                    content={participantNames.join(', ')}
-                  >
-                    <div className={styles.participantsList}>
-                      {participantNames.slice(0, 2).map((participant, idx) => (
-                        <Badge key={idx} variant="info">
-                          {participant}
-                        </Badge>
-                      ))}
-                      {participantNames.length > 2 && (
-                        <Badge 
-                          variant="info"
-                          className={styles.moreParticipants}
-                          onClick={() => setSelectedExpense(expense)}
-                        >
-                          +{participantNames.length - 2}
-                        </Badge>
+            {expenses.map((expense) => {
+              const participantItemsOwned = hasParticipantItems(expense);
+
+              return (
+                <tr key={expense.id} className={styles.tableRow}>
+                  <td className={styles.titleCell}>
+                    <div className={styles.titleContent}>
+                      <span className={styles.title}>{expense.title}</span>
+                      {!participantItemsOwned &&
+                        Array.isArray(expense.split_items) &&
+                        expense.split_items.length > 0 && (
+                          <span className={styles.splitItems}>
+                            {expense.split_items.join(', ')}
+                          </span>
+                        )}
+                      {expense.description && (
+                        <span className={styles.description}>{expense.description}</span>
                       )}
                     </div>
-                  </Tooltip>
-                    );
-                  })()}
-                </td>
-                <td className={styles.shareCell}>
-                  <span className={styles.share}>
-                    {expense.split_mode === 'custom'
-                      ? 'Custom'
-                      : formatCurrency(expense.share_per_person)}
-                  </span>
-                </td>
-                <td className={styles.dateCell}>
-                  {expense.created_at
-                    ? new Date(expense.created_at).toLocaleDateString('en-PH')
-                    : 'N/A'}
-                </td>
-                <td className={styles.actionsCell}>
-                  <div className={styles.actions}>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => setSelectedExpense(expense)}
-                      disabled={isLoading}
-                    >
-                      View Details
-                    </Button>
-                    {onEdit && (
+                  </td>
+                  <td className={styles.amountCell}>
+                    <span className={styles.amount}>
+                      {formatCurrency(expense.amount)}
+                    </span>
+                  </td>
+                  <td className={styles.participantsCell}>
+                    {(() => {
+                      const participantNames = getParticipantNames(expense);
+                      return (
+                        <Tooltip content={participantNames.join(', ')}>
+                          <div className={styles.participantsList}>
+                            {participantNames.slice(0, 2).map((participant, idx) => (
+                              <Badge key={idx} variant="info">
+                                {participant}
+                              </Badge>
+                            ))}
+                            {participantNames.length > 2 && (
+                              <Badge
+                                variant="info"
+                                className={styles.moreParticipants}
+                                onClick={() => setSelectedExpense(expense)}
+                              >
+                                +{participantNames.length - 2}
+                              </Badge>
+                            )}
+                          </div>
+                        </Tooltip>
+                      );
+                    })()}
+                  </td>
+                  <td className={styles.shareCell}>
+                    <span className={styles.share}>
+                      {expense.split_mode === 'custom'
+                        ? 'Custom'
+                        : formatCurrency(expense.share_per_person)}
+                    </span>
+                  </td>
+                  <td className={styles.dateCell}>
+                    {expense.created_at
+                      ? new Date(expense.created_at).toLocaleDateString('en-PH')
+                      : 'N/A'}
+                  </td>
+                  <td className={styles.actionsCell}>
+                    <div className={styles.actions}>
                       <Button
                         variant="secondary"
                         size="sm"
-                        onClick={() => onEdit(expense.id)}
+                        onClick={() => setSelectedExpense(expense)}
                         disabled={isLoading}
                       >
-                        Edit
+                        View Details
                       </Button>
-                    )}
-                    {onDelete && (
-                      <Button
-                        variant="danger"
-                        size="sm"
-                        onClick={() => {
-                          if (
-                            confirm(
-                              'Are you sure you want to delete this expense?'
-                            )
-                          ) {
-                            onDelete(expense.id);
-                          }
-                        }}
-                        disabled={isLoading}
-                      >
-                        Delete
-                      </Button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
+                      {onEdit && (
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => onEdit(expense.id)}
+                          disabled={isLoading}
+                        >
+                          Edit
+                        </Button>
+                      )}
+                      {onDelete && (
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          onClick={() => {
+                            if (confirm('Are you sure you want to delete this expense?')) {
+                              onDelete(expense.id);
+                            }
+                          }}
+                          disabled={isLoading}
+                        >
+                          Delete
+                        </Button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

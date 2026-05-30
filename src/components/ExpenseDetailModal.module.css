@@ -130,6 +130,22 @@
   margin: 0;
 }
 
+.itemList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.itemBadge {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  border-radius: 0.375rem;
+  padding: 0.4rem 0.65rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
 .participantsList {
   display: flex;
   flex-direction: column;
@@ -147,8 +163,34 @@
 }
 
 .participantName {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
   font-weight: 500;
   color: #1f2937;
+}
+
+.participantItemList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.participantItemName {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background-color: #eef2ff;
+  border: 1px solid #c7d2fe;
+  border-radius: 0.3rem;
+  color: #64748b;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.22rem 0.42rem;
+}
+
+.participantItemAmount {
+  color: #1d4ed8;
 }
 
 .participantShare {

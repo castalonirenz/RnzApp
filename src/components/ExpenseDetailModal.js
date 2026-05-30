@@ -22,20 +22,46 @@ export default function ExpenseDetailModal({ expense, isOpen, onClose, onEdit, o
         .map((participant) => (typeof participant === 'string' ? participant : participant?.name))
         .filter(Boolean)
     : [];
+  const splitItems = Array.isArray(expense.split_items)
+    ? expense.split_items.filter(Boolean)
+    : [];
 
   const participantShareMap = Array.isArray(expense.participant_shares)
     ? expense.participant_shares.reduce((acc, item) => {
         const name = String(item?.name ?? '').trim();
         const amount = Number(item?.amount);
+        const itemizedItems = item?.itemized_items ?? item?.itemizedItems;
+        const items =
+          Array.isArray(itemizedItems) && itemizedItems.length > 0
+            ? itemizedItems
+                .map((entry) => ({
+                  item: String(entry?.item ?? entry?.name ?? entry?.description ?? '').trim(),
+                  amount: Number(entry?.amount ?? entry?.price ?? 0),
+                }))
+                .filter((entry) => entry.item || Number(entry.amount) > 0)
+            : (Array.isArray(item?.items)
+                ? item.items.map((value) => String(value).trim()).filter(Boolean)
+                : String(item?.item ?? item?.split_item ?? item?.splitItem ?? '')
+                    .split(',')
+                    .map((value) => value.trim())
+                    .filter(Boolean)
+              ).map((value, index) => ({
+                item: value,
+                amount: index === 0 ? amount : 0,
+              }));
         if (name && Number.isFinite(amount)) {
-          acc[name] = amount;
+          acc[name] = {
+            amount,
+            items,
+          };
         }
         return acc;
       }, {})
     : {};
+  const hasParticipantItems = Object.values(participantShareMap).some((share) => share.items?.length > 0);
 
   const resolveParticipantShare = (name) => {
-    if (Number.isFinite(participantShareMap[name])) return participantShareMap[name];
+    if (Number.isFinite(participantShareMap[name]?.amount)) return participantShareMap[name].amount;
     return expense.share_per_person;
   };
 
@@ -91,6 +117,21 @@ export default function ExpenseDetailModal({ expense, isOpen, onClose, onEdit, o
             </div>
           )}
 
+          {splitItems.length > 0 && !hasParticipantItems && (
+            <div className={styles.section}>
+              <div className={styles.field}>
+                <label>Split Items</label>
+                <div className={styles.itemList}>
+                  {splitItems.map((item, index) => (
+                    <span key={`${item}-${index}`} className={styles.itemBadge}>
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className={styles.section}>
             <div className={styles.field}>
               <label>{expense.split_mode === 'custom' ? 'Split Mode' : 'Share Per Person'}</label>
@@ -108,7 +149,26 @@ export default function ExpenseDetailModal({ expense, isOpen, onClose, onEdit, o
               <div className={styles.participantsList}>
                 {participantNames.map((participant, idx) => (
                   <div key={idx} className={styles.participantItem}>
-                    <span className={styles.participantName}>{participant}</span>
+                    <span className={styles.participantName}>
+                      {participant}
+                      {participantShareMap[participant]?.items?.length > 0 && (
+                        <span className={styles.participantItemList}>
+                          {participantShareMap[participant].items.map((entry, itemIndex) => (
+                            <span
+                              key={`${participant}-${entry.item}-${itemIndex}`}
+                              className={styles.participantItemName}
+                            >
+                              <span>{entry.item}</span>
+                              {Number(entry.amount) > 0 && (
+                                <span className={styles.participantItemAmount}>
+                                  {formatCurrency(entry.amount)}
+                                </span>
+                              )}
+                            </span>
+                          ))}
+                        </span>
+                      )}
+                    </span>
                     <span className={styles.participantShare}>
                       {formatCurrency(resolveParticipantShare(participant))}
                     </span>

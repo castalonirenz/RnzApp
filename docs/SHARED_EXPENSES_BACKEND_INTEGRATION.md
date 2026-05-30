@@ -7,7 +7,7 @@ The Shared Expense module now supports **dynamic splitting**:
 - `equal` split: everyone pays the same amount
 - `custom` split: each participant can pay a different amount (for example, one person only added water)
 
-Frontend now sends split data using `split_mode` and `participant_shares`.  
+Frontend now sends item tracking and split data using `split_items`, `split_mode`, and `participant_shares`.
 Backend should validate and persist these fields.
 
 Base route prefix: `/api/expenses/shared`
@@ -24,6 +24,7 @@ Base route prefix: `/api/expenses/shared`
   "title": "Dinner + Water",
   "amount": 2000,
   "description": "Restaurant bill",
+  "split_items": ["Dinner mains", "Bottled water"],
   "participants": ["John", "Jane", "Mike"],
   "split_mode": "custom",
   "participant_shares": [
@@ -41,6 +42,7 @@ Base route prefix: `/api/expenses/shared`
 Notes:
 
 - `participants` remains an array of participant names.
+- `split_items` is required for both `equal` and `custom` splits. Use it to identify which item(s) are being split, for example `["Pizza", "Drinks"]`.
 - `split_mode` is `equal` or `custom`.
 - `participant_shares` is always recommended in response.
 - `share_per_person` can still be returned for compatibility:
@@ -67,6 +69,7 @@ Success `200`:
       "id": "507f1f77bcf86cd799439011",
       "title": "Dinner + Water",
       "amount": 2000,
+      "split_items": ["Dinner mains", "Bottled water"],
       "participants": ["John", "Jane", "Mike"],
       "split_mode": "custom",
       "participant_shares": [
@@ -107,6 +110,7 @@ Headers:
   "title": "Dinner",
   "amount": 2000,
   "description": "Team dinner",
+  "split_items": ["Dinner mains", "Service charge"],
   "participants": ["John", "Jane", "Mike"],
   "split_mode": "equal",
   "participant_shares": [
@@ -124,6 +128,7 @@ Headers:
   "title": "Dinner + Water",
   "amount": 2000,
   "description": "Mike only had water",
+  "split_items": ["Dinner mains", "Bottled water"],
   "participants": ["John", "Jane", "Mike"],
   "split_mode": "custom",
   "participant_shares": [
@@ -139,9 +144,10 @@ Headers:
 - `title`: required, string, 1..100 chars
 - `amount`: required, number > 0
 - `description`: optional, max 500 chars
+- `split_items`: required, array of 1 to 50 non-empty strings. Required for both `equal` and `custom` split modes.
 - `participants`: required, array of unique non-empty strings, min 1
-- `split_mode`: required, enum: `equal | custom`
-- `participant_shares`: required array for both modes (recommended)
+- `split_mode`: optional, enum: `equal | custom`, defaults to `equal`
+- `participant_shares`: required when `split_mode` is `custom`, optional for `equal`
   - each item: `{ name: string, amount: number >= 0 }`
   - names should match participants exactly
   - sum of all `participant_shares.amount` must equal `amount` (allow tiny tolerance, e.g. `0.01`)
@@ -159,6 +165,8 @@ Success `201`: returns created shared expense object.
 `PUT /api/expenses/shared/{id}`
 
 Body: same format as create.
+
+`split_items` is also required when editing. Send the complete updated list of item(s) included in the split.
 
 Success `200`: returns updated shared expense object.
 
@@ -209,11 +217,11 @@ Compute settlements using `participant_shares` for each expense.
 
 `GET /api/expenses/shared/export?format=csv|pdf`
 
-CSV/PDF should include split type and participant amounts.
+CSV/PDF should include split type, split items, and participant amounts.
 
 Suggested CSV columns:
 
-`Title,Amount,Split Mode,Participants,Participant Shares,Created At`
+`Title,Amount,Split Mode,Split Items,Participants,Participant Shares,Created At`
 
 ---
 
@@ -225,6 +233,7 @@ Suggested CSV columns:
   title: String,
   amount: Number,
   description: String,
+  split_items: [String],
   participants: [String],
   split_mode: String, // 'equal' | 'custom'
   participant_shares: [
@@ -279,7 +288,8 @@ Validation error example:
 
 ## Implementation Checklist
 
-- [ ] Add `split_mode` and `participant_shares` to model/schema
+- [ ] Add `split_items`, `split_mode`, and `participant_shares` to model/schema
+- [ ] Validate `split_items` for equal/custom create and update
 - [ ] Validate equal/custom split logic
 - [ ] Persist and return `participant_shares`
 - [ ] Update summary and settlement calculations to use participant shares
@@ -317,6 +327,7 @@ This section helps backend teams migrate from the previous equal-only model to t
   "title": "Dinner + Water",
   "amount": 2000,
   "description": "Mike only had water",
+  "split_items": ["Dinner mains", "Bottled water"],
   "participants": ["John", "Jane", "Mike"],
   "split_mode": "custom",
   "participant_shares": [
@@ -329,27 +340,31 @@ This section helps backend teams migrate from the previous equal-only model to t
 
 ### 2) Backward Compatibility Rules
 
-Recommended server behavior while old clients still exist:
+Current server behavior:
 
 1. If `split_mode` is missing:
   - default to `equal`
 2. If `participant_shares` is missing:
   - auto-generate equal shares from `participants` + `amount`
-3. Always return normalized fields in response:
+3. `split_items` is required for create/update so frontend can track which item(s) were split.
+4. Existing records without stored `split_items` can still be read and return `split_items: []` until edited.
+5. Always return normalized fields in response:
   - `split_mode`
+  - `split_items`
   - `participant_shares`
   - `share_per_person` (for legacy UI compatibility)
 
 ### 3) Suggested Rollout Phases
 
 1. **Phase A (compatible read/write)**
-  - Add new DB fields (`split_mode`, `participant_shares`)
+  - Add new DB fields (`split_items`, `split_mode`, `participant_shares`)
   - Accept both old and new request bodies
   - Return normalized new shape
 2. **Phase B (frontend cutover)**
-  - Deploy frontend that always sends `split_mode` + `participant_shares`
+  - Deploy frontend that always sends `split_items`, `split_mode`, and custom `participant_shares`
 3. **Phase C (enforce strict validation)**
-  - Require `split_mode` and `participant_shares`
+  - Require `split_items`
+  - Require `participant_shares` only for custom splits
   - Keep fallback only if you still support old app versions
 
 ### 4) Data Migration for Existing Records
@@ -372,6 +387,7 @@ for each legacy expense:
 
 ### 5) Validation Checklist During Migration
 
+- [ ] `split_items` contains at least one non-empty item name/description
 - [ ] `participants` contains unique, non-empty names
 - [ ] `participant_shares` names exactly match `participants`
 - [ ] sum(`participant_shares.amount`) equals `amount` (tolerance: `0.01`)

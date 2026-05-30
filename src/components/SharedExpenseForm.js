@@ -10,9 +10,69 @@ const parseParticipants = (raw = '') =>
     .map((p) => p.trim())
     .filter(Boolean);
 
+const parseSplitItems = (raw = '') =>
+  String(raw)
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+
 const toNumber = (value, fallback = 0) => {
   const n = Number(value);
   return Number.isFinite(n) ? n : fallback;
+};
+
+const buildEqualShares = (participants, totalAmount) => {
+  if (participants.length === 0) return [];
+
+  const totalCents = Math.round(toNumber(totalAmount, 0) * 100);
+  const baseCents = Math.floor(totalCents / participants.length);
+  const remainder = totalCents - baseCents * participants.length;
+
+  return participants.map((name, index) => ({
+    name,
+    amount: (baseCents + (index < remainder ? 1 : 0)) / 100,
+  }));
+};
+
+const emptyItemEntry = () => ({ item: '', amount: 0 });
+
+const normalizeItemizedEntries = (source, fallbackAmount = 0) => {
+  const sourceEntries =
+    source?.itemized_items ??
+    source?.itemizedItems ??
+    source?.split_items ??
+    source?.splitItems ??
+    null;
+
+  if (Array.isArray(sourceEntries) && sourceEntries.length > 0) {
+    const entries = sourceEntries
+      .map((entry) => {
+        if (typeof entry === 'string') {
+          return { item: entry.trim(), amount: 0 };
+        }
+
+        return {
+          item: String(entry?.item ?? entry?.name ?? entry?.description ?? '').trim(),
+          amount: toNumber(entry?.amount ?? entry?.price, 0),
+        };
+      })
+      .filter((entry) => entry.item || entry.amount > 0);
+
+    if (entries.length > 0) return entries;
+  }
+
+  const itemNames = parseSplitItems(
+    Array.isArray(source?.items)
+      ? source.items.join(', ')
+      : source?.item ?? source?.split_item ?? source?.splitItem ?? source?.description ?? ''
+  );
+
+  if (itemNames.length === 0) return [emptyItemEntry()];
+
+  return itemNames.map((item, index) => ({
+    item,
+    amount: index === 0 ? toNumber(fallbackAmount, 0) : 0,
+  }));
 };
 
 const initialParticipantText = (initialData) => {
@@ -25,34 +85,64 @@ const initialParticipantText = (initialData) => {
   return initialData?.participants || '';
 };
 
+const initialSplitItemsText = (initialData) => {
+  if (Array.isArray(initialData?.split_items)) {
+    return initialData.split_items.filter(Boolean).join(', ');
+  }
+
+  if (Array.isArray(initialData?.splitItems)) {
+    return initialData.splitItems.filter(Boolean).join(', ');
+  }
+
+  return initialData?.split_items || initialData?.splitItems || '';
+};
+
 const initialSplitMode = (initialData) => {
-  if (initialData?.split_mode === 'custom' || initialData?.splitMode === 'custom') return 'custom';
+  const rawMode = initialData?.split_mode ?? initialData?.splitMode;
+  if (rawMode === 'custom') return 'custom';
+  if (rawMode === 'equal') return 'equal';
+
   if (Array.isArray(initialData?.participant_shares) && initialData.participant_shares.length > 0) {
     return 'custom';
   }
   return 'equal';
 };
 
-const initialCustomAmounts = (initialData) => {
+const initialCustomSplits = (initialData) => {
   const fromParticipantShares = Array.isArray(initialData?.participant_shares)
     ? initialData.participant_shares
     : [];
+  const splitItems = Array.isArray(initialData?.split_items) ? initialData.split_items : [];
 
   if (fromParticipantShares.length > 0) {
-    return fromParticipantShares.reduce((acc, item) => {
-      const name = String(item?.name ?? item?.participant ?? '').trim();
-      const amount = toNumber(item?.amount ?? item?.share_amount, NaN);
-      if (name && Number.isFinite(amount)) acc[name] = amount;
+    return fromParticipantShares.reduce((acc, share, index) => {
+      const name = String(share?.name ?? share?.participant ?? '').trim();
+      const amount = toNumber(share?.amount ?? share?.share_amount, NaN);
+      const entries = normalizeItemizedEntries(
+        {
+          ...share,
+          item: share?.item ?? share?.split_item ?? share?.splitItem ?? splitItems[index] ?? '',
+        },
+        amount
+      );
+      if (name && Number.isFinite(amount)) acc[name] = { entries };
       return acc;
     }, {});
   }
 
   if (Array.isArray(initialData?.participants)) {
-    return initialData.participants.reduce((acc, item) => {
-      if (item && typeof item === 'object') {
-        const name = String(item?.name ?? item?.participant ?? '').trim();
-        const amount = toNumber(item?.amount ?? item?.share_amount ?? item?.share, NaN);
-        if (name && Number.isFinite(amount)) acc[name] = amount;
+    return initialData.participants.reduce((acc, participant, index) => {
+      if (participant && typeof participant === 'object') {
+        const name = String(participant?.name ?? participant?.participant ?? '').trim();
+        const amount = toNumber(participant?.amount ?? participant?.share_amount ?? participant?.share, NaN);
+        const entries = normalizeItemizedEntries(
+          {
+            ...participant,
+            item: participant?.item ?? participant?.split_item ?? participant?.splitItem ?? splitItems[index] ?? '',
+          },
+          amount
+        );
+        if (name && Number.isFinite(amount)) acc[name] = { entries };
       }
       return acc;
     }, {});
@@ -71,11 +161,12 @@ export default function SharedExpenseForm({
     title: initialData?.title || '',
     amount: initialData?.amount || '',
     description: initialData?.description || '',
+    split_items: initialSplitItemsText(initialData),
     participants: initialParticipantText(initialData),
   });
 
   const [splitMode, setSplitMode] = useState(initialSplitMode(initialData));
-  const [customAmounts, setCustomAmounts] = useState(initialCustomAmounts(initialData));
+  const [customSplits, setCustomSplits] = useState(initialCustomSplits(initialData));
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -86,21 +177,94 @@ export default function SharedExpenseForm({
 
     if (name === 'participants') {
       const participants = parseParticipants(value);
-      setCustomAmounts((prev) => {
+      setCustomSplits((prev) => {
         const next = {};
         participants.forEach((participant) => {
-          next[participant] = prev[participant] ?? 0;
+          next[participant] = prev[participant] ?? { entries: [emptyItemEntry()] };
         });
         return next;
       });
     }
   };
 
-  const handleCustomAmountChange = (participant, rawAmount) => {
-    setCustomAmounts((prev) => ({
+  const handleCustomEntryChange = (participant, entryIndex, field, value) => {
+    setCustomSplits((prev) => ({
       ...prev,
-      [participant]: rawAmount === '' ? 0 : toNumber(rawAmount, 0),
+      [participant]: {
+        entries: (prev[participant]?.entries ?? [emptyItemEntry()]).map((entry, index) =>
+          index === entryIndex
+            ? {
+                ...entry,
+                [field]: field === 'amount' ? (value === '' ? 0 : toNumber(value, 0)) : value,
+              }
+            : entry
+        ),
+      },
     }));
+  };
+
+  const handleAddCustomEntry = (participant) => {
+    setCustomSplits((prev) => ({
+      ...prev,
+      [participant]: {
+        entries: [...(prev[participant]?.entries ?? [emptyItemEntry()]), emptyItemEntry()],
+      },
+    }));
+  };
+
+  const handleRemoveCustomEntry = (participant, entryIndex) => {
+    setCustomSplits((prev) => {
+      const entries = prev[participant]?.entries ?? [emptyItemEntry()];
+      const nextEntries = entries.filter((_, index) => index !== entryIndex);
+
+      return {
+        ...prev,
+        [participant]: {
+          entries: nextEntries.length > 0 ? nextEntries : [emptyItemEntry()],
+        },
+      };
+    });
+  };
+
+  const getCustomEntries = (participant) => {
+    const entries = customSplits[participant]?.entries;
+    return Array.isArray(entries) && entries.length > 0 ? entries : [emptyItemEntry()];
+  };
+
+  const getCustomParticipantTotal = (participant) => {
+    return getCustomEntries(participant).reduce(
+      (sum, entry) => sum + toNumber(entry.amount, 0),
+      0
+    );
+  };
+
+  const getCustomSplitItems = (participants) => {
+    return participants.flatMap((participant) =>
+      getCustomEntries(participant)
+        .map((entry) => String(entry.item ?? '').trim())
+        .filter(Boolean)
+    );
+  };
+
+  const buildCustomParticipantShares = (participants) => {
+    return participants.map((name) => {
+      const entries = getCustomEntries(name)
+        .map((entry) => ({
+          item: String(entry.item ?? '').trim(),
+          amount: toNumber(entry.amount, 0),
+        }))
+        .filter((entry) => entry.item || entry.amount > 0);
+      const items = entries.map((entry) => entry.item).filter(Boolean);
+      const amount = entries.reduce((sum, entry) => sum + entry.amount, 0);
+
+      return {
+        name,
+        item: items.join(', '),
+        items,
+        amount,
+        itemized_items: entries,
+      };
+    });
   };
 
   const validateForm = () => {
@@ -117,14 +281,38 @@ export default function SharedExpenseForm({
       return 'At least one participant is required.';
     }
 
+    const splitItems =
+      splitMode === 'custom'
+        ? getCustomSplitItems(participants)
+        : parseSplitItems(formData.split_items);
+    if (splitItems.length === 0) {
+      return 'At least one split item is required.';
+    }
+
     if (splitMode === 'custom') {
       let customTotal = 0;
       for (const participant of participants) {
-        const amount = toNumber(customAmounts[participant], 0);
-        if (amount < 0) {
-          return `${participant} amount cannot be negative.`;
+        const entries = getCustomEntries(participant);
+        const hasEntry = entries.some((entry) => String(entry.item ?? '').trim() || toNumber(entry.amount, 0) > 0);
+        if (!hasEntry) {
+          return `${participant} needs at least one item and amount.`;
         }
-        customTotal += amount;
+
+        for (const entry of entries) {
+          const item = String(entry.item ?? '').trim();
+          const amount = toNumber(entry.amount, 0);
+
+          if (!item && amount > 0) {
+            return `${participant} has an amount without an item.`;
+          }
+          if (item && amount <= 0) {
+            return `${participant} item "${item}" needs an amount greater than 0.`;
+          }
+          if (amount < 0) {
+            return `${participant} item amount cannot be negative.`;
+          }
+          customTotal += amount;
+        }
       }
 
       const totalAmount = toNumber(formData.amount, 0);
@@ -150,23 +338,21 @@ export default function SharedExpenseForm({
 
     const participants = parseParticipants(formData.participants);
     const totalAmount = toNumber(formData.amount, 0);
-    const equalAmount = participants.length > 0 ? totalAmount / participants.length : 0;
 
     const participantShares =
       splitMode === 'custom'
-        ? participants.map((name) => ({
-            name,
-            amount: toNumber(customAmounts[name], 0),
-          }))
-        : participants.map((name) => ({
-            name,
-            amount: Number(equalAmount.toFixed(2)),
-          }));
+        ? buildCustomParticipantShares(participants)
+        : buildEqualShares(participants, totalAmount);
+    const splitItems =
+      splitMode === 'custom'
+        ? participantShares.flatMap((share) => share.items || [])
+        : parseSplitItems(formData.split_items);
 
     const payload = {
       title: formData.title.trim(),
       amount: totalAmount,
       description: formData.description.trim(),
+      split_items: splitItems,
       participants,
       split_mode: splitMode,
       participant_shares: participantShares,
@@ -182,7 +368,7 @@ export default function SharedExpenseForm({
       : '0.00';
 
   const customTotal = participantList.reduce(
-    (sum, participant) => sum + toNumber(customAmounts[participant], 0),
+    (sum, participant) => sum + getCustomParticipantTotal(participant),
     0
   );
   const customRemaining = toNumber(formData.amount, 0) - customTotal;
@@ -231,6 +417,22 @@ export default function SharedExpenseForm({
         />
       </div>
 
+      {splitMode === 'equal' && (
+        <div className={styles.formGroup}>
+          <label htmlFor="split_items">Split Items *</label>
+          <Input
+            id="split_items"
+            name="split_items"
+            type="text"
+            placeholder="Enter item names separated by commas (e.g., Dinner mains, Bottled water)"
+            value={formData.split_items}
+            onChange={handleChange}
+            disabled={isLoading}
+          />
+          <small className={styles.hint}>Add at least one item included in this split</small>
+        </div>
+      )}
+
       <div className={styles.formGroup}>
         <label htmlFor="participants">Participants *</label>
         <Input
@@ -278,20 +480,58 @@ export default function SharedExpenseForm({
 
       {splitMode === 'custom' && participantList.length > 0 && (
         <div className={styles.customSplitBox}>
-          <p className={styles.customSplitTitle}>Custom Amounts Per Participant</p>
+          <p className={styles.customSplitTitle}>Custom Itemized Split Per Participant</p>
           <div className={styles.customSplitGrid}>
             {participantList.map((participant) => (
-              <div key={participant} className={styles.customSplitRow}>
-                <span className={styles.customSplitName}>{participant}</span>
-                <Input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={String(customAmounts[participant] ?? '')}
-                  onChange={(e) => handleCustomAmountChange(participant, e.target.value)}
+              <div key={participant} className={styles.customSplitParticipant}>
+                <div className={styles.customSplitHeader}>
+                  <span className={styles.customSplitName}>{participant}</span>
+                  <span className={styles.customSplitSubtotal}>
+                    PHP {getCustomParticipantTotal(participant).toFixed(2)}
+                  </span>
+                </div>
+                {getCustomEntries(participant).map((entry, entryIndex) => (
+                  <div key={`${participant}-${entryIndex}`} className={styles.customSplitRow}>
+                    <Input
+                      type="text"
+                      value={String(entry.item ?? '')}
+                      onChange={(e) =>
+                        handleCustomEntryChange(participant, entryIndex, 'item', e.target.value)
+                      }
+                      disabled={isLoading}
+                      placeholder="Item"
+                    />
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={String(entry.amount ?? '')}
+                      onChange={(e) =>
+                        handleCustomEntryChange(participant, entryIndex, 'amount', e.target.value)
+                      }
+                      disabled={isLoading}
+                      placeholder="0.00"
+                    />
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => handleRemoveCustomEntry(participant, entryIndex)}
+                      disabled={isLoading || getCustomEntries(participant).length === 1}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => handleAddCustomEntry(participant)}
                   disabled={isLoading}
-                  placeholder="0.00"
-                />
+                >
+                  Add Item
+                </Button>
               </div>
             ))}
           </div>

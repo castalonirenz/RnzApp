@@ -20,14 +20,57 @@ const toParticipantNames = (participants) => {
     .filter(Boolean);
 };
 
+const toSplitItems = (splitItems) => {
+  if (typeof splitItems === 'string') {
+    return splitItems.split(',').map((item) => item.trim()).filter(Boolean);
+  }
+
+  if (!Array.isArray(splitItems)) return [];
+  return splitItems.map((item) => String(item).trim()).filter(Boolean);
+};
+
+const toShareItems = (share = {}) => {
+  const itemizedItems = share?.itemized_items ?? share?.itemizedItems;
+  if (Array.isArray(itemizedItems)) {
+    return itemizedItems
+      .map((entry) => String(entry?.item ?? entry?.name ?? entry?.description ?? '').trim())
+      .filter(Boolean);
+  }
+
+  if (Array.isArray(share?.items)) return toSplitItems(share.items);
+  return toSplitItems(share?.item ?? share?.split_item ?? share?.splitItem ?? '');
+};
+
+const toItemizedItems = (share = {}, fallbackAmount = 0) => {
+  const itemizedItems = share?.itemized_items ?? share?.itemizedItems;
+  if (Array.isArray(itemizedItems) && itemizedItems.length > 0) {
+    return itemizedItems
+      .map((entry) => ({
+        item: String(entry?.item ?? entry?.name ?? entry?.description ?? '').trim(),
+        amount: toNumber(entry?.amount ?? entry?.price, 0),
+      }))
+      .filter((entry) => entry.item || entry.amount > 0);
+  }
+
+  const items = toShareItems(share);
+  return items.map((item, index) => ({
+    item,
+    amount: index === 0 ? toNumber(fallbackAmount, 0) : 0,
+  }));
+};
+
 const toParticipantShares = (expense, fallbackNames = []) => {
   const fromParticipantShares = Array.isArray(expense?.participant_shares)
     ? expense.participant_shares
         .map((item) => {
           const name = String(item?.name ?? item?.participant ?? '').trim();
           const amount = toNumber(item?.amount ?? item?.share_amount, NaN);
+          const items = toShareItems(item);
+          const itemizedItems = toItemizedItems(item, amount);
           if (!name || !Number.isFinite(amount)) return null;
-          return { name, amount };
+          return items.length > 0
+            ? { name, item: items.join(', '), items, amount, itemized_items: itemizedItems }
+            : { name, amount };
         })
         .filter(Boolean)
     : [];
@@ -41,8 +84,12 @@ const toParticipantShares = (expense, fallbackNames = []) => {
         if (!item || typeof item !== 'object') return null;
         const name = String(item?.name ?? item?.participant ?? '').trim();
         const amount = toNumber(item?.amount ?? item?.share_amount ?? item?.share, NaN);
+        const items = toShareItems(item);
+        const itemizedItems = toItemizedItems(item, amount);
         if (!name || !Number.isFinite(amount)) return null;
-        return { name, amount };
+        return items.length > 0
+          ? { name, item: items.join(', '), items, amount, itemized_items: itemizedItems }
+          : { name, amount };
       })
       .filter(Boolean);
 
@@ -63,13 +110,28 @@ const buildPayload = (expenseData = {}) => {
     : expenseData.participants?.split(',').map((p) => p.trim()).filter(Boolean) || [];
 
   const splitMode = expenseData.split_mode === 'custom' ? 'custom' : 'equal';
+  const splitItemsFromShares = Array.isArray(expenseData.participant_shares)
+    ? expenseData.participant_shares
+        .flatMap((item) => toShareItems(item))
+    : [];
+  const splitItems = splitItemsFromShares.length > 0
+    ? splitItemsFromShares
+    : Array.isArray(expenseData.split_items)
+      ? toSplitItems(expenseData.split_items)
+      : toSplitItems(expenseData.split_items);
 
   const participantShares = Array.isArray(expenseData.participant_shares)
     ? expenseData.participant_shares
-        .map((item) => ({
-          name: String(item?.name ?? '').trim(),
-          amount: toNumber(item?.amount, NaN),
-        }))
+        .map((item) => {
+          const name = String(item?.name ?? '').trim();
+          const items = toShareItems(item);
+          const amount = toNumber(item?.amount, NaN);
+          const itemizedItems = toItemizedItems(item, amount);
+
+          return items.length > 0
+            ? { name, item: items.join(', '), items, amount, itemized_items: itemizedItems }
+            : { name, amount };
+        })
         .filter((item) => item.name && Number.isFinite(item.amount))
     : [];
 
@@ -77,6 +139,7 @@ const buildPayload = (expenseData = {}) => {
     title: expenseData.title,
     amount: toNumber(expenseData.amount, 0),
     description: expenseData.description || '',
+    split_items: splitItems,
     participants,
     split_mode: splitMode,
     participant_shares: participantShares,
@@ -89,6 +152,7 @@ const normalizeSharedExpense = (expense) => ({
   title: expense?.title ?? 'Shared Expense',
   amount: toNumber(expense?.amount, 0),
   description: expense?.description ?? '',
+  split_items: toSplitItems(expense?.split_items ?? expense?.splitItems ?? []),
   participants: toParticipantNames(
     Array.isArray(expense?.participants)
       ? expense.participants

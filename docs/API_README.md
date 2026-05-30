@@ -448,9 +448,85 @@ Success (`200`):
 }
 ```
 
+## Shared Expense Endpoints
+
+### 13) List Shared Expenses
+
+- Method: `GET`
+- Path: `/api/expenses/shared`
+- Auth: Yes
+
+Query parameters:
+- `limit` optional positive integer
+- `offset` optional zero-or-greater integer
+- `sort` optional: `created_at`, `-created_at`, `updated_at`, `-updated_at`, `title`, `-title`
+
+### 14) Create Shared Expense
+
+- Method: `POST`
+- Path: `/api/expenses/shared`
+- Auth: Yes
+
+Request body for equal split:
+
+```json
+{
+  "title": "Dinner",
+  "amount": 2000,
+  "description": "Team dinner",
+  "split_items": ["Dinner mains", "Service charge"],
+  "participants": ["John", "Jane", "Mike"],
+  "split_mode": "equal"
+}
+```
+
+Request body for custom split:
+
+```json
+{
+  "title": "Dinner + Water",
+  "amount": 2000,
+  "description": "Mike only had water",
+  "split_items": ["Dinner mains", "Bottled water"],
+  "participants": ["John", "Jane", "Mike"],
+  "split_mode": "custom",
+  "participant_shares": [
+    { "name": "John", "amount": 900 },
+    { "name": "Jane", "amount": 900 },
+    { "name": "Mike", "amount": 200 }
+  ]
+}
+```
+
+Validation:
+- `split_items` is required for both `equal` and `custom`; send 1 to 50 non-empty item names/descriptions.
+- `participants` must contain 1 to 20 unique names.
+- `participant_shares` is required when `split_mode` is `custom` and must match participants exactly.
+- For `equal`, the backend calculates `participant_shares`.
+
+Success (`201`) returns the shared expense with `split_items`, `split_mode`, `participant_shares`, and `share_per_person`.
+
+### 15) Update Shared Expense
+
+- Method: `PUT`
+- Path: `/api/expenses/shared/:id`
+- Auth: Yes
+
+Body: same format as create. `split_items` is required on edit and should contain the complete updated list of item(s) included in the split.
+
+### 16) Shared Expense Detail, Summary, Settlement, Export
+
+- `GET /api/expenses/shared/:id`
+- `DELETE /api/expenses/shared/:id`
+- `GET /api/expenses/shared/summary`
+- `GET /api/expenses/shared/settlement`
+- `GET /api/expenses/shared/export?format=csv|pdf`
+
+CSV/PDF exports include split items and participant share details.
+
 ## Health Endpoint
 
-### 13) API Health
+### 17) API Health
 
 - Method: `GET`
 - Path: `/health`
